@@ -1,0 +1,138 @@
+You are a senior full-stack engineer, DevOps engineer, and debugging specialist.
+
+Project:
+- Frontend hosted on Cloudflare
+- Backend hosted on Render
+- Database hosted on Neon.tech
+- App includes signup/login, client/producer dashboard, AI chat, image generation, and order flow
+
+Current problem:
+- The app builds, but core flows are broken
+- Signup is not working properly
+- AI is not responding
+- The system likely has deployment wiring issues, env var issues, CORS issues, auth callback issues, or database connection issues
+
+Your job:
+1. Diagnose the full stack from browser to backend to database to AI provider.
+2. Fix the root cause of signup/login failures.
+3. Fix API communication between Cloudflare frontend and Render backend.
+4. Fix Neon database connectivity and Prisma or ORM issues.
+5. Fix AI provider wiring so text AI responds correctly.
+6. Make the app stable end-to-end before adding any new features.
+
+STRICT RULES:
+- Do not guess.
+- Do not rewrite the whole app unless necessary.
+- Do not add new features until the existing flows work.
+- Use logs, browser console, network errors, and backend logs to find the exact issue.
+- Keep secrets in environment variables only.
+- Never hardcode API keys, database URLs, or callback URLs.
+- If any secret was exposed previously, advise rotation.
+
+DEBUGGING ORDER:
+Step 1: Verify deployed URLs
+- Identify the exact frontend URL
+- Identify the exact backend URL
+- Identify the exact database connection setup
+- Confirm the frontend is calling the correct backend base URL
+- Confirm all URLs are production URLs, not localhost
+
+Step 2: Inspect browser-side errors
+- Check the browser console
+- Check the network tab for signup/login/API requests
+- Identify CORS errors, 401, 403, 404, 500, or failed preflight requests
+- Find the exact request that fails first in the signup flow
+
+Step 3: Inspect backend logs on Render
+- Check startup logs
+- Check API route logs
+- Check auth logs
+- Check AI route logs
+- Check database connection logs
+- Identify the first thrown error and trace it back
+
+Step 4: Verify environment variables on Render
+Confirm these exist and are correct:
+- DATABASE_URL
+- DIRECT_URL if used
+- AUTH_SECRET
+- AUTH_URL or AUTH_TRUST_HOST depending on auth setup
+- FRONTEND_URL
+- BACKEND_URL
+- BLUEMINDS_BASE_URL
+- BLUEMINDS_API_KEY
+- BLUEMINDS_MODEL_ID
+- any storage or upload env vars
+
+Step 5: Fix CORS and cross-domain requests
+- Allow the Cloudflare frontend origin in the backend
+- Allow credentials only if needed
+- Confirm preflight requests succeed
+- Make sure fetch calls use the deployed backend URL, not localhost
+
+Step 6: Fix authentication
+- Confirm signup writes to the database successfully
+- Confirm session creation works after signup
+- Confirm redirects after auth point to the correct production URLs
+- Confirm cookies or tokens are valid across the deployed domains
+- Confirm role-based routing works for client and producer users
+
+Step 7: Fix database access
+- Test Neon connection from the backend
+- Confirm migrations are applied
+- Confirm tables exist
+- Confirm profile/order/enquiry creation works
+- Confirm Prisma or ORM schema matches the live database
+- Fix any missing relations or mismatched column names
+
+Step 8: Fix AI response flow
+- Confirm the backend AI endpoint receives requests
+- Confirm the AI provider base URL is correct
+- Confirm the model ID is correct
+- Confirm the API key is loaded from env
+- Confirm the request format matches the provider’s OpenAI-compatible schema
+- Confirm the response is parsed correctly
+- Confirm errors are handled and returned properly
+- Confirm text AI works before testing image generation
+
+Step 9: Test the full user journey
+- Sign up as client
+- Sign up as producer
+- Log in successfully
+- Create an enquiry
+- Get AI response
+- Upload image
+- Generate outfit options
+- Generate lookbook
+- Create order
+- Load dashboard correctly
+- Verify notifications if enabled
+
+WHAT TO DELIVER:
+- A clear root-cause report
+- The exact files changed
+- The exact errors found
+- The exact fix applied for each issue
+- A final checklist showing signup, login, AI, and database all working
+
+PRIORITY FIXES TO CHECK FIRST:
+- Frontend API base URL still pointing to localhost
+- Missing CORS config on backend
+- Wrong auth callback or redirect URL
+- Missing environment variables on Render
+- Neon connection string mismatch
+- Prisma migration mismatch
+- Invalid AI model ID
+- AI provider key not loaded or blocked
+
+FINAL ACCEPTANCE CRITERIA:
+- Signup works
+- Login works
+- Profile creation works
+- Backend can talk to Neon
+- AI text responses work
+- No CORS errors
+- No runtime crash on deployment
+- All production URLs are correctly wired
+
+Start by reading the deployed logs and identifying the first failing request in the signup flow.

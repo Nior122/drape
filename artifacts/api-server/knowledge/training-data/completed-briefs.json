@@ -1,0 +1,45 @@
+{
+  "description": "Structured examples of perfectly completed fashion briefs.",
+  "examples": [
+    {
+      "id": "brief_001",
+      "gender": "female",
+      "garment_type": "Mermaid Gown",
+      "style_summary": "A highly elegant, fitted mermaid gown with structured corset for a wedding reception.",
+      "occasion": "White Wedding Reception",
+      "aesthetic_direction": "Glamorous and modern",
+      "color_palette": ["Emerald Green", "Gold"],
+      "fabric_preferences": "Sequin lace with skin illusion net",
+      "silhouette": "Mermaid (fitted to knee, then flared)",
+      "budget_min": 150000,
+      "budget_max": 250000,
+      "timeline_days": 21,
+      "special_notes": "Client has an hourglass shape. Ensure boning is strong. Needs a high slit.",
+      "image_prompts": [
+        "A hyper-realistic fashion photography shot of a Nigerian woman wearing a stunning emerald green mermaid gown with gold sequin accents, corset bodice, high slit, walking down a grand staircase, cinematic lighting",
+        "Full body shot of a glamorous emerald green and gold lace corset dress with sheer illusion neckline, Nigerian fashion aesthetic, elegant posing, luxury wedding reception setting, 8k resolution",
+        "Close up fashion editorial shot of an emerald green corseted bodice with intricate gold beadwork, worn by a dark-skinned model, luxurious fabric textures, soft studio lighting"
+      ]
+    },
+    {
+      "id": "brief_002",
+      "gender": "male",
+      "garment_type": "Senator Suit",
+      "style_summary": "A clean, minimalistic dark blue Senator suit with subtle chest embroidery.",
+      "occasion": "Corporate Event / Smart Casual",
+      "aesthetic_direction": "Minimalist and sharp",
+      "color_palette": ["Navy Blue", "Silver"],
+      "fabric_preferences": "High quality Wool or thick Cashmere",
+      "silhouette": "Slim fit, tapered trousers",
+      "budget_min": 50000,
+      "budget_max": 80000,
+      "timeline_days": 14,
+      "special_notes": "Client has broad shoulders (athletic build). Ensure trousers are ankle length.",
+      "image_prompts": [
+        "A handsome Nigerian man wearing a sharp, minimalist navy blue Senator suit with silver embroidery on the chest, standing in a modern Lagos office, professional lighting, hyper-realistic",
+        "Full body shot of a tailored navy blue two-piece native Senator wear, slim fit trousers, dark skin model, corporate African fashion, crisp fabric textures, 8k",
+        "Close up of subtle silver embroidery on a navy blue cashmere Senator tunic, Nigerian menswear, luxurious texture, clean stitching, studio lighting"
+      ]
+    }
+  ]
+}

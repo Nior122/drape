@@ -1,0 +1,35 @@
+{
+  "description": "Structured examples of collected measurements.",
+  "examples": [
+    {
+      "id": "meas_001",
+      "gender": "female",
+      "measurements": {
+        "bust": 38,
+        "under_bust": 32,
+        "waist": 30,
+        "hip": 42,
+        "shoulder": 15,
+        "arm_round": 13,
+        "sleeve_length": 22,
+        "dress_length": 60
+      },
+      "unit": "inches"
+    },
+    {
+      "id": "meas_002",
+      "gender": "male",
+      "measurements": {
+        "chest": 44,
+        "waist": 36,
+        "hip": 42,
+        "shoulder": 18,
+        "neck": 16.5,
+        "sleeve_length": 25,
+        "trouser_length": 40,
+        "thigh": 24
+      },
+      "unit": "inches"
+    }
+  ]
+}

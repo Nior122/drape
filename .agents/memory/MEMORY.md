@@ -1,0 +1,7 @@
+- [API server file structure](api-server-structure.md) — double-nested lib/lib/ and middlewares/middlewares/ quirk; canonical files live at src/lib/ and src/middlewares/
+- [DB schema layout](db-schema-layout.md) — auth tables were in src/src/schema/; canonical path is lib/db/src/schema/; all tables now exported from index.ts
+- [api-zod duplicate export fix](api-zod-exports.md) — use explicit named exports from generated/types to avoid duplicate export conflicts with generated/api Zod validators
+- [requireAuth middleware scoping](requireauth-scoping.md) — must use router.use('/path', requireAuth) not router.use(requireAuth); unscoped middleware runs for ALL requests reaching that router, blocking subsequent routers
+- [In-app notification system](notification-system.md) — SSE bus at src/lib/notification-bus.ts, createNotification at src/lib/create-notification.ts, SSE route at notifications-stream.ts, frontend hook at use-notification-stream.ts
+- [Express 5 params type assertion](express5-params.md) — req.params values typed as string|string[] in @types/express@5; use `req.params as Record<string, string>` when destructuring route params for Drizzle queries
+- [DB schema: user profile fields](db-profile-fields.md) — phone/whatsapp/city/country/bio are in profilesTable, NOT usersTable; always leftJoin profilesTable when reading these fields for users

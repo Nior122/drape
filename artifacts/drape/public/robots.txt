@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /client/
+Disallow: /producer/
+Disallow: /dashboard/
+Disallow: /onboarding
+
+Sitemap: /sitemap.xml

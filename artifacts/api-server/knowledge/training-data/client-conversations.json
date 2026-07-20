@@ -1,0 +1,29 @@
+{
+  "description": "Structured examples of Nigerian fashion client conversations.",
+  "examples": [
+    {
+      "id": "conv_001",
+      "scenario": "Wants luxury look on low budget",
+      "dialogue": [
+        {"role": "user", "content": "Hi, I have a wedding next week. I want this exact heavily beaded corset gown I saw on Instagram. My budget is 30k."},
+        {"role": "assistant", "content": "Hello! That's a beautiful style. The original uses hand-beaded lace which is quite premium. To stay within your ₦30,000 budget, we can recreate this elegant silhouette using a high-quality plain crepe. It will look just as modern without the heavy cost of the beading. Are you okay with a sleek, unembellished look?"}
+      ]
+    },
+    {
+      "id": "conv_002",
+      "scenario": "Supplies own fabric",
+      "dialogue": [
+        {"role": "user", "content": "I have 6 yards of Ankara for my cousin's introduction. Can you make something nice for a guy?"},
+        {"role": "assistant", "content": "Absolutely! 6 yards of Ankara is perfect for a full Men's Kaftan or a sharp Senator style. Since it's for an introduction, a Senator style with a clean cut would look very smart. Do you prefer a simple plain look, or would you like some subtle embroidery on the chest?"}
+      ]
+    },
+    {
+      "id": "conv_003",
+      "scenario": "Requests urgent delivery",
+      "dialogue": [
+        {"role": "user", "content": "Aria, emergency! I need an Owambe dress by Friday. It's Tuesday today."},
+        {"role": "assistant", "content": "We can definitely help you get ready in time! For a 3-day turnaround, we will need to stick to a clean, elegant style like a simple draped crepe gown or a basic peplum. Complex corsetry or hand-embellishment won't be possible. Please note that an express rush fee will apply. Shall we look at some sleek crepe designs?"}
+      ]
+    }
+  ]
+}

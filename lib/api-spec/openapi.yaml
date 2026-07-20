@@ -1,0 +1,1726 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Drape API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication and onboarding
+  - name: ai
+    description: AI enquiry and brief generation
+  - name: storage
+    description: Object storage
+  - name: client
+    description: Client dashboard — orders, notifications, measurements, profile, designers
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [auth]
+      summary: Register with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/google:
+    post:
+      operationId: googleAuth
+      tags: [auth]
+      summary: Authenticate with Google ID token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleAuthInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout and clear session
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/shared:
+    patch:
+      operationId: saveSharedOnboarding
+      tags: [auth]
+      summary: Save shared onboarding details (name, phone, location)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/client:
+    patch:
+      operationId: saveClientOnboarding
+      tags: [auth]
+      summary: Save client-specific onboarding preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/producer:
+    patch:
+      operationId: saveProducerOnboarding
+      tags: [auth]
+      summary: Save producer-specific onboarding details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProducerOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/enquiry:
+    post:
+      operationId: sendEnquiry
+      tags: [ai]
+      summary: Send a message in the AI enquiry flow (streaming SSE)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnquiryInput"
+      responses:
+        "200":
+          description: SSE stream of chat deltas and final brief
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/generate:
+    post:
+      operationId: generateLookbookImages
+      tags: [ai]
+      summary: Generate 3 outfit concept images from a completed brief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateImagesInput"
+      responses:
+        "200":
+          description: Generation results with object paths
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateImagesResult"
+        "404":
+          description: Brief not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/lookbook/{sessionId}:
+    get:
+      operationId: getLookbook
+      tags: [ai]
+      summary: Retrieve brief and generated images for a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lookbook with brief and images
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/lookbook:
+    post:
+      operationId: saveLookbook
+      tags: [ai]
+      summary: Save / retrieve lookbook for a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookbookSaveInput"
+      responses:
+        "200":
+          description: Lookbook data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a presigned URL for direct-to-GCS upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+        "400":
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /client/orders:
+    get:
+      operationId: getClientOrders
+      tags: [client]
+      summary: List all orders for the authenticated client
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientOrder"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /client/orders/{id}:
+    get:
+      operationId: getClientOrder
+      tags: [client]
+      summary: Get a single order with messages and review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientOrderDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /client/orders/{id}/review:
+    post:
+      operationId: createOrderReview
+      tags: [client]
+      summary: Submit a review for a delivered order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewInput"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderReview"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /client/messages/{orderId}:
+    get:
+      operationId: getOrderMessages
+      tags: [client]
+      summary: Get messages for an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderMessage"
+    post:
+      operationId: sendOrderMessage
+      tags: [client]
+      summary: Send a message on an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderMessage"
+
+  /client/notifications:
+    get:
+      operationId: getClientNotifications
+      tags: [client]
+      summary: Get notifications for the authenticated client
+      responses:
+        "200":
+          description: Notifications list with unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResponse"
+
+  /client/notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [client]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /client/notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [client]
+      summary: Mark a single notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /client/measurements:
+    get:
+      operationId: getClientMeasurements
+      tags: [client]
+      summary: Get saved body measurements
+      responses:
+        "200":
+          description: Measurements or null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ClientMeasurements"
+                  - type: "null"
+    put:
+      operationId: updateClientMeasurements
+      tags: [client]
+      summary: Save or update body measurements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeasurementsInput"
+      responses:
+        "200":
+          description: Saved measurements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientMeasurements"
+
+  /client/profile:
+    get:
+      operationId: getClientStyleProfile
+      tags: [client]
+      summary: Get client style profile
+      responses:
+        "200":
+          description: Style profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientStyleProfile"
+    patch:
+      operationId: updateClientStyleProfile
+      tags: [client]
+      summary: Update client style profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStyleProfileInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /client/designers:
+    get:
+      operationId: getDesigners
+      tags: [client]
+      summary: Browse all designers
+      responses:
+        "200":
+          description: List of designers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Designer"
+
+  /producer/dashboard:
+    get:
+      operationId: getProducerDashboard
+      tags: [producer]
+      summary: Get producer dashboard stats and recent orders
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProducerDashboard"
+
+  /producer/orders:
+    get:
+      operationId: getProducerOrders
+      tags: [producer]
+      summary: List all producer orders
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProducerOrderSummary"
+
+  /producer/orders/{id}:
+    get:
+      operationId: getProducerOrder
+      tags: [producer]
+      summary: Get full order detail for producer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Full order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProducerOrderDetail"
+    patch:
+      operationId: updateProducerOrder
+      tags: [producer]
+      summary: Update order status, notes, or timeline
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProducerOrderBody"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /producer/orders/{id}/messages:
+    post:
+      operationId: sendProducerMessage
+      tags: [producer]
+      summary: Send a message on an order as producer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+              required: [content]
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /producer/clients:
+    get:
+      operationId: getProducerClients
+      tags: [producer]
+      summary: List all clients who have ordered from this producer
+      responses:
+        "200":
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProducerClient"
+
+  /producer/storefront:
+    get:
+      operationId: getProducerStorefront
+      tags: [producer]
+      summary: Get producer storefront/profile data
+      responses:
+        "200":
+          description: Storefront data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProducerStorefront"
+    patch:
+      operationId: updateProducerStorefront
+      tags: [producer]
+      summary: Update producer storefront/profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProducerStorefrontBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /producer/analytics:
+    get:
+      operationId: getProducerAnalytics
+      tags: [producer]
+      summary: Get producer analytics data
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProducerAnalytics"
+
+  /ai/production-guide:
+    post:
+      operationId: generateProductionGuide
+      tags: [producer]
+      summary: Generate AI production guide for an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: string
+              required: [orderId]
+      responses:
+        "200":
+          description: Generated guide content and download URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionGuideResult"
+
+  /ai/production-guide/{orderId}:
+    get:
+      operationId: downloadProductionGuide
+      tags: [producer]
+      summary: Download PDF production guide for an order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER, ADMIN]
+        onboardingComplete:
+          type: boolean
+        phone:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: ["integer", "null"]
+        budgetMax:
+          type: ["integer", "null"]
+        styleNote:
+          type: ["string", "null"]
+        studioName:
+          type: ["string", "null"]
+        studioType:
+          type: ["string", "null"]
+          enum: [SOLO, STUDIO, null]
+        specialties:
+          type: array
+          items:
+            type: string
+        priceMin:
+          type: ["integer", "null"]
+        priceMax:
+          type: ["integer", "null"]
+        instagram:
+          type: ["string", "null"]
+        portfolioUrls:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - email
+        - role
+        - onboardingComplete
+        - stylePreferences
+        - specialties
+        - portfolioUrls
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    SignupInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER]
+      required:
+        - email
+        - password
+        - name
+        - role
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    GoogleAuthInput:
+      type: object
+      properties:
+        idToken:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER]
+          description: Required only on first sign-in
+      required:
+        - idToken
+
+    SharedOnboardingInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+      required: []
+
+    ClientOnboardingInput:
+      type: object
+      properties:
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: integer
+        budgetMax:
+          type: integer
+        styleNote:
+          type: string
+      required: []
+
+    ProducerOnboardingInput:
+      type: object
+      properties:
+        studioName:
+          type: string
+        studioType:
+          type: string
+          enum: [SOLO, STUDIO]
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+        priceMin:
+          type: integer
+        priceMax:
+          type: integer
+        instagram:
+          type: string
+      required: []
+
+    EnquiryInput:
+      type: object
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: ["string", "null"]
+        designerSlug:
+          type: ["string", "null"]
+        imageUrls:
+          type: array
+          items:
+            type: string
+      required:
+        - message
+
+    GenerateImagesInput:
+      type: object
+      properties:
+        sessionId:
+          type: ["string", "null"]
+        briefId:
+          type: ["string", "null"]
+      required: []
+
+    LookbookSaveInput:
+      type: object
+      properties:
+        sessionId:
+          type: string
+      required:
+        - sessionId
+
+    FashionBrief:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionId:
+          type: string
+        styleSummary:
+          type: ["string", "null"]
+        occasion:
+          type: ["string", "null"]
+        aestheticDirection:
+          type: ["string", "null"]
+        colorPalette:
+          type: array
+          items:
+            type: string
+        fabricPreferences:
+          type: ["string", "null"]
+        silhouette:
+          type: ["string", "null"]
+        budgetMin:
+          type: ["integer", "null"]
+        budgetMax:
+          type: ["integer", "null"]
+        timelineDays:
+          type: ["integer", "null"]
+        specialNotes:
+          type: ["string", "null"]
+        imagePrompts:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - sessionId
+        - colorPalette
+        - imagePrompts
+        - createdAt
+
+    LookbookImage:
+      type: object
+      properties:
+        id:
+          type: string
+        briefId:
+          type: string
+        sessionId:
+          type: string
+        objectPath:
+          type: string
+        prompt:
+          type: string
+        promptIndex:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - briefId
+        - sessionId
+        - objectPath
+        - prompt
+        - promptIndex
+        - createdAt
+
+    LookbookResponse:
+      type: object
+      properties:
+        brief:
+          $ref: "#/components/schemas/FashionBrief"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookbookImage"
+      required:
+        - brief
+        - images
+
+    GenerateImagesResult:
+      type: object
+      properties:
+        briefId:
+          type: string
+        sessionId:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              objectPath:
+                type: string
+              prompt:
+                type: string
+            required: [index, objectPath, prompt]
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              error:
+                type: string
+            required: [index, error]
+      required:
+        - briefId
+        - sessionId
+        - results
+        - errors
+
+    RequestUploadUrlBody:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+      required:
+        - name
+        - size
+        - contentType
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+          required: [name, size, contentType]
+      required:
+        - uploadURL
+        - objectPath
+        - metadata
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    OrderStatus:
+      type: string
+      enum: [ENQUIRY, ACCEPTED, DEPOSIT_PAID, IN_PRODUCTION, FITTING, FINAL_PAYMENT, DELIVERED, COMPLETED, CANCELLED]
+
+    TimelineEvent:
+      type: object
+      properties:
+        date:
+          type: string
+        label:
+          type: string
+        completed:
+          type: boolean
+        note:
+          type: ["string", "null"]
+      required: [date, label, completed]
+
+    ClientOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        agreedPrice:
+          type: ["integer", "null"]
+        currency:
+          type: string
+        depositPaid:
+          type: boolean
+        dueDate:
+          type: ["string", "null"]
+        estimatedDays:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        producerId:
+          type: string
+        producerName:
+          type: ["string", "null"]
+        producerStudioName:
+          type: ["string", "null"]
+        reviewed:
+          type: boolean
+      required: [id, status, title, currency, depositPaid, createdAt, updatedAt, producerId, reviewed]
+
+    OrderMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        senderId:
+          type: string
+        senderRole:
+          type: string
+        content:
+          type: string
+        readByClient:
+          type: boolean
+        readByProducer:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, orderId, senderId, senderRole, content, readByClient, readByProducer, createdAt]
+
+    OrderReview:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        clientId:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, orderId, clientId, rating, createdAt]
+
+    ClientOrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/ClientOrder"
+        - type: object
+          properties:
+            notes:
+              type: ["string", "null"]
+            timelineEvents:
+              type: array
+              items:
+                $ref: "#/components/schemas/TimelineEvent"
+            briefId:
+              type: ["string", "null"]
+            sessionId:
+              type: ["string", "null"]
+            producerInstagram:
+              type: ["string", "null"]
+            producerWhatsapp:
+              type: ["string", "null"]
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderMessage"
+            review:
+              oneOf:
+                - $ref: "#/components/schemas/OrderReview"
+                - type: "null"
+
+    CreateReviewInput:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+      required: [rating]
+
+    SendMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+
+    ClientNotification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [ORDER_UPDATE, MESSAGE, LOOKBOOK_READY, REVIEW_REQUEST, GENERAL]
+        title:
+          type: string
+        body:
+          type: ["string", "null"]
+        link:
+          type: ["string", "null"]
+        relatedId:
+          type: ["string", "null"]
+        read:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, userId, type, title, read, createdAt]
+
+    NotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientNotification"
+        unreadCount:
+          type: integer
+      required: [notifications, unreadCount]
+
+    ClientMeasurements:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        unit:
+          type: string
+          enum: [cm, in]
+        data:
+          type: object
+          additionalProperties:
+            type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+        createdAt:
+          type: string
+      required: [id, userId, unit, data, updatedAt, createdAt]
+
+    UpdateMeasurementsInput:
+      type: object
+      properties:
+        unit:
+          type: string
+          enum: [cm, in]
+        data:
+          type: object
+          additionalProperties:
+            type: ["number", "null"]
+        notes:
+          type: string
+      required: []
+
+    ClientStyleProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: ["string", "null"]
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: ["integer", "null"]
+        budgetMax:
+          type: ["integer", "null"]
+        styleNote:
+          type: ["string", "null"]
+        measurements:
+          oneOf:
+            - $ref: "#/components/schemas/ClientMeasurements"
+            - type: "null"
+      required: [id, email, stylePreferences]
+
+    UpdateStyleProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        bio:
+          type: string
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: integer
+        budgetMax:
+          type: integer
+        styleNote:
+          type: string
+      required: []
+
+    Designer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: ["string", "null"]
+        studioName:
+          type: ["string", "null"]
+        studioType:
+          type: ["string", "null"]
+          enum: [SOLO, STUDIO, null]
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: ["string", "null"]
+        priceMin:
+          type: ["integer", "null"]
+        priceMax:
+          type: ["integer", "null"]
+        instagram:
+          type: ["string", "null"]
+        portfolioUrls:
+          type: array
+          items:
+            type: string
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+      required: [id, specialties, portfolioUrls]
+
+    ProducerOrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        agreedPrice:
+          type: ["integer", "null"]
+        currency:
+          type: string
+        depositPaid:
+          type: boolean
+        dueDate:
+          type: ["string", "null"]
+        estimatedDays:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        productionGuideAt:
+          type: ["string", "null"]
+        clientId:
+          type: string
+        clientName:
+          type: ["string", "null"]
+        clientEmail:
+          type: string
+      required: [id, title, status, currency, depositPaid, clientId, clientEmail, createdAt, updatedAt]
+
+    ProducerOrderDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        description:
+          type: ["string", "null"]
+        agreedPrice:
+          type: ["integer", "null"]
+        currency:
+          type: string
+        depositPaid:
+          type: boolean
+        dueDate:
+          type: ["string", "null"]
+        estimatedDays:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        timelineEvents:
+          type: array
+          items:
+            type: object
+        productionGuideAt:
+          type: ["string", "null"]
+        productionGuideContent:
+          type: ["object", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        client:
+          type: ["object", "null"]
+        measurements:
+          type: ["object", "null"]
+        brief:
+          type: ["object", "null"]
+        lookbookImages:
+          type: array
+          items:
+            type: object
+        messages:
+          type: array
+          items:
+            type: object
+      required: [id, title, status, currency, depositPaid, createdAt, updatedAt, lookbookImages, messages]
+
+    UpdateProducerOrderBody:
+      type: object
+      properties:
+        status:
+          type: string
+        notes:
+          type: string
+        timelineEvents:
+          type: array
+          items:
+            type: object
+        agreedPrice:
+          type: integer
+        depositPaid:
+          type: boolean
+        estimatedDays:
+          type: integer
+        dueDate:
+          type: string
+
+    ProducerClient:
+      type: object
+      properties:
+        clientId:
+          type: string
+        clientName:
+          type: ["string", "null"]
+        clientEmail:
+          type: string
+        clientCity:
+          type: ["string", "null"]
+        clientCountry:
+          type: ["string", "null"]
+        orderCount:
+          type: integer
+        totalSpend:
+          type: number
+        lastOrderAt:
+          type: ["string", "null"]
+        measurements:
+          type: ["object", "null"]
+      required: [clientId, clientEmail, orderCount, totalSpend]
+
+    ProducerStorefront:
+      type: object
+      properties:
+        profile:
+          type: ["object", "null"]
+        user:
+          type: ["object", "null"]
+      required: [profile, user]
+
+    UpdateProducerStorefrontBody:
+      type: object
+      properties:
+        studioName:
+          type: string
+        studioType:
+          type: string
+          enum: [SOLO, STUDIO]
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+        priceMin:
+          type: integer
+        priceMax:
+          type: integer
+        instagram:
+          type: string
+        portfolioUrls:
+          type: array
+          items:
+            type: string
+
+    ProducerDashboard:
+      type: object
+      properties:
+        activeOrders:
+          type: integer
+        revenueThisMonth:
+          type: number
+        totalClients:
+          type: integer
+        unreadMessages:
+          type: integer
+        recentOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProducerOrderSummary"
+      required: [activeOrders, revenueThisMonth, totalClients, unreadMessages, recentOrders]
+
+    ProducerAnalytics:
+      type: object
+      properties:
+        revenueByMonth:
+          type: array
+          items:
+            type: object
+        ordersByStatus:
+          type: array
+          items:
+            type: object
+        topClients:
+          type: array
+          items:
+            type: object
+        stats:
+          type: object
+      required: [revenueByMonth, ordersByStatus, topClients, stats]
+
+    ProductionGuideContent:
+      type: object
+      properties:
+        garmentType:
+          type: string
+        orderSummary:
+          type: string
+        fabricNotes:
+          type: string
+        cuttingGuide:
+          type: array
+          items:
+            type: string
+        sewingSequence:
+          type: array
+          items:
+            type: string
+        finishingSteps:
+          type: array
+          items:
+            type: string
+        fittingChecklist:
+          type: array
+          items:
+            type: string
+        qualityChecklist:
+          type: array
+          items:
+            type: string
+        technicalNotes:
+          type: string
+        estimatedHours:
+          type: number
+      required: [garmentType, orderSummary, fabricNotes, cuttingGuide, sewingSequence, finishingSteps, fittingChecklist, qualityChecklist, technicalNotes, estimatedHours]
+
+    ProductionGuideResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        content:
+          $ref: "#/components/schemas/ProductionGuideContent"
+        productionGuideAt:
+          type: ["string", "null"]
+        downloadUrl:
+          type: string
+      required: [success, content, downloadUrl]
+

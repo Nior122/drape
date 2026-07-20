@@ -1,0 +1,25 @@
+{
+  "description": "Structured examples of how the AI should recommend styles based on client profiles.",
+  "examples": [
+    {
+      "id": "rec_001",
+      "client_profile": {
+        "gender": "female",
+        "body_shape": "pear",
+        "occasion": "Owambe",
+        "budget": 45000
+      },
+      "recommendation": "For an Owambe with a ₦45,000 budget, I recommend a beautiful Fit-and-Flare Peplum top with a matching wrapper or skirt using Ankara or simple Lace. Since you have a pear shape, the peplum will perfectly highlight your waist while flowing gracefully over your hips. It's elegant, comfortable, and very budget-friendly."
+    },
+    {
+      "id": "rec_002",
+      "client_profile": {
+        "gender": "male",
+        "body_shape": "heavy_set",
+        "occasion": "Traditional Wedding (Groom)",
+        "budget": 300000
+      },
+      "recommendation": "As the groom, you need to stand out. I highly recommend a full 3-piece Agbada set in premium Aso-Oke or rich Brocade. The broad shoulders and flowing drape of the Agbada are incredibly regal and very flattering for a heavy-set build. We can do extensive hand-embroidery on the chest to give it that true luxury feel."
+    }
+  ]
+}

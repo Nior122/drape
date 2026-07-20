@@ -1,0 +1,2 @@
+- [Auth architecture](auth-architecture.md) — JWT in httpOnly cookie via jose; bcrypt passwords; Google OAuth via google-auth-library ID token verification
+- [Drape onboarding flow](drape-onboarding.md) — multi-step signup stores role → shared details → role-specific prefs; onboardingComplete flips to true after step 3

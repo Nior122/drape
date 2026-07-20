@@ -1,0 +1,9 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dashboard/producer/page": "app/dashboard/producer/page.js",
+  "/dashboard/client/page": "app/dashboard/client/page.js",
+  "/marketplace/page": "app/marketplace/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
+}

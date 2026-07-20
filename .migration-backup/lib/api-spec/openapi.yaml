@@ -1,0 +1,398 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Drape API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication and onboarding
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [auth]
+      summary: Register with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/google:
+    post:
+      operationId: googleAuth
+      tags: [auth]
+      summary: Authenticate with Google ID token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleAuthInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout and clear session
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/shared:
+    patch:
+      operationId: saveSharedOnboarding
+      tags: [auth]
+      summary: Save shared onboarding details (name, phone, location)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/client:
+    patch:
+      operationId: saveClientOnboarding
+      tags: [auth]
+      summary: Save client-specific onboarding preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/onboarding/producer:
+    patch:
+      operationId: saveProducerOnboarding
+      tags: [auth]
+      summary: Save producer-specific onboarding details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProducerOnboardingInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER, ADMIN]
+        onboardingComplete:
+          type: boolean
+        phone:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: ["integer", "null"]
+        budgetMax:
+          type: ["integer", "null"]
+        styleNote:
+          type: ["string", "null"]
+        studioName:
+          type: ["string", "null"]
+        studioType:
+          type: ["string", "null"]
+          enum: [SOLO, STUDIO, null]
+        specialties:
+          type: array
+          items:
+            type: string
+        priceMin:
+          type: ["integer", "null"]
+        priceMax:
+          type: ["integer", "null"]
+        instagram:
+          type: ["string", "null"]
+        portfolioUrls:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - email
+        - role
+        - onboardingComplete
+        - stylePreferences
+        - specialties
+        - portfolioUrls
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    SignupInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER]
+      required:
+        - email
+        - password
+        - name
+        - role
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    GoogleAuthInput:
+      type: object
+      properties:
+        idToken:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, PRODUCER]
+          description: Required only on first sign-in
+      required:
+        - idToken
+
+    SharedOnboardingInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+      required: []
+
+    ClientOnboardingInput:
+      type: object
+      properties:
+        stylePreferences:
+          type: array
+          items:
+            type: string
+        budgetMin:
+          type: integer
+        budgetMax:
+          type: integer
+        styleNote:
+          type: string
+      required: []
+
+    ProducerOnboardingInput:
+      type: object
+      properties:
+        studioName:
+          type: string
+        studioType:
+          type: string
+          enum: [SOLO, STUDIO]
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+        priceMin:
+          type: integer
+        priceMax:
+          type: integer
+        instagram:
+          type: string
+      required: []

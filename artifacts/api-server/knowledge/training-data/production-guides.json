@@ -1,0 +1,23 @@
+{
+  "description": "Structured examples of production guides for tailors.",
+  "examples": [
+    {
+      "id": "prod_001",
+      "garment": "Women's Corset Gown",
+      "fabric_requirements": "4 yards main lace, 3 yards satin lining, 1 yard skin illusion net, 1 pack rigilene boning, bra cups.",
+      "cutting_instructions": "Draft corset bodice pattern. Cut front and back panels from lace and lining. Interface all bodice pieces. Cut mermaid skirt panels.",
+      "sewing_sequence": "1. Interface bodice. 2. Sew corset channels and insert boning. 3. Attach cups. 4. Sew skirt panels. 5. Join bodice to skirt. 6. Insert zipper.",
+      "fitting_process": "1st fitting: Check bodice fit and corset tightness. 2nd fitting: Check skirt drape and hem length.",
+      "finishing_checklist": ["Hem leveled", "All boning secure", "Zipper flows smoothly", "Inner seams weaved", "Pressed completely"]
+    },
+    {
+      "id": "prod_002",
+      "garment": "Men's Senator Suit",
+      "fabric_requirements": "4 yards high-quality cashmere/wool blend.",
+      "cutting_instructions": "Cut top front and back panels, sleeves. Cut trouser front and back legs, waistband.",
+      "sewing_sequence": "1. Prepare front placket/design. 2. Join shoulders and sleeves. 3. Sew side seams. 4. Trousers: join legs, insert zipper, attach waistband.",
+      "fitting_process": "1st fitting: Check trouser waist and length. Check top chest fit and sleeve length.",
+      "finishing_checklist": ["Trouser creases ironed sharp", "Buttons/snaps secure", "No loose threads on embroidery", "Pressed completely"]
+    }
+  ]
+}
