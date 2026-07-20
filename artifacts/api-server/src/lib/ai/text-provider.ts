@@ -43,6 +43,28 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const BLUEMINDS_API_KEY = process.env.BLUEMINDS_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// ─── Deprecated model mappings ───────────────────────────────────────────────
+// Maps retired model slugs to their current equivalents so existing Render
+// environment variable configs keep working without a redeploy.
+const DEPRECATED_MODEL_MAP: Record<string, string> = {
+  "gpt-3.5-turbo-0613": "gpt-4o-mini",
+  "gpt-3.5-turbo-0301": "gpt-4o-mini",
+  "gpt-3.5-turbo-16k-0613": "gpt-4o-mini",
+  "gpt-3.5-turbo-16k": "gpt-4o-mini",
+  "gpt-4-0314": "gpt-4o-mini",
+  "gpt-4-0613": "gpt-4o",
+};
+
+// Log safe diagnostics at module load so Render logs show provider status immediately.
+// Never logs actual secret values.
+logger.info({
+  groq: !!GROQ_API_KEY,
+  blueminds: !!BLUEMINDS_API_KEY,
+  openai: !!OPENAI_API_KEY,
+  blueminds_base_url_set: !!(process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL),
+  blueminds_model_id: process.env.BLUEMINDS_MODEL_ID ?? "(not set)",
+}, "[text-provider] AI provider env check");
+
 /**
  * Lazily resolved provider config + OpenAI client.
  *
@@ -54,49 +76,74 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let cachedClient: OpenAI | null = null;
 let cachedModel: string | null = null;
 
+function mapDeprecatedModel(model: string): string {
+  // Map the `:free` tier suffix (e.g. from OpenRouter)
+  if (model.endsWith(":free")) {
+    const mapped = model.slice(0, -":free".length);
+    logger.warn({ from: model, to: mapped }, "[AI] BLUEMINDS_MODEL_ID ':free' tier retired — mapping to paid slug");
+    return mapped;
+  }
+  // Map individually retired model slugs
+  if (DEPRECATED_MODEL_MAP[model]) {
+    const mapped = DEPRECATED_MODEL_MAP[model];
+    logger.warn(
+      { from: model, to: mapped },
+      `[AI] Model '${model}' is deprecated — automatically mapping to '${mapped}'. Update BLUEMINDS_MODEL_ID on Render to silence this warning.`,
+    );
+    return mapped;
+  }
+  return model;
+}
+
 function buildClient(): { client: OpenAI; model: string } {
   if (cachedClient && cachedModel) return { client: cachedClient, model: cachedModel };
 
   if (GROQ_API_KEY) {
-    const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+    const rawModel = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+    const model = mapDeprecatedModel(rawModel);
     const client = new OpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: GROQ_API_KEY });
     cachedClient = client;
     cachedModel = model;
+    logger.info({ provider: "groq", model }, "[AI] text provider initialised");
     return { client, model };
   }
 
   if (BLUEMINDS_API_KEY) {
-    const baseURL = process.env.BLUEMINDS_BASE_URL;
-    let model = process.env.BLUEMINDS_MODEL_ID;
+    // Accept both BLUEMINDS_BASE_URL and the legacy BLUEMINDS_API_URL name.
+    const baseURL = process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL;
+    const rawModel = process.env.BLUEMINDS_MODEL_ID;
     if (!baseURL) {
-      throw new Error(
+      const err = new Error(
         "BLUEMINDS_BASE_URL is missing. Set it on Render (e.g. https://api.bluesminds.com/v1) so the AI can reach BlueMinds.",
       );
+      // Reset cache so the next request retries after an env fix.
+      cachedClient = null;
+      cachedModel = null;
+      throw err;
     }
-    if (!model) {
-      throw new Error(
+    if (!rawModel) {
+      const err = new Error(
         "BLUEMINDS_MODEL_ID is missing. Set it on Render (e.g. gpt-4o-mini) so the AI knows which model to use.",
       );
+      cachedClient = null;
+      cachedModel = null;
+      throw err;
     }
-    // BlueMinds retired the `:free` tier of several models. Map the dead
-    // `:free` slug to its paid equivalent so existing deployments keep working
-    // without a redeploy. See BlueMinds 404: "use this slug instead: ...".
-    if (model.endsWith(":free")) {
-      const mapped = model.slice(0, -":free".length);
-      logger.warn({ from: model, to: mapped }, "BLUEMINDS_MODEL_ID ':free' tier retired — mapping to paid slug");
-      model = mapped;
-    }
+    const model = mapDeprecatedModel(rawModel);
     const client = new OpenAI({ baseURL, apiKey: BLUEMINDS_API_KEY });
     cachedClient = client;
     cachedModel = model;
+    logger.info({ provider: "blueminds", model, baseURL }, "[AI] text provider initialised");
     return { client, model };
   }
 
   if (OPENAI_API_KEY) {
-    const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+    const rawModel = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+    const model = mapDeprecatedModel(rawModel);
     const client = new OpenAI({ apiKey: OPENAI_API_KEY });
     cachedClient = client;
     cachedModel = model;
+    logger.info({ provider: "openai", model }, "[AI] text provider initialised");
     return { client, model };
   }
 

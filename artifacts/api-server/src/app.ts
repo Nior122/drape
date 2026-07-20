@@ -22,17 +22,37 @@ const app: Express = express();
 // ---------------------------------------------------------------------------
 const IS_PROD = process.env.NODE_ENV === "production";
 
+// ---------------------------------------------------------------------------
+// CORS allowed origins.
+//
+// The BASELINE_ORIGINS list covers known Cloudflare Pages deployments.
+// If your production frontend domain is NOT in this list, requests will be
+// blocked by CORS. Add it via the ALLOWED_ORIGINS environment variable on Render:
+//   ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+//
+// In development every origin is allowed.
+// ---------------------------------------------------------------------------
 const BASELINE_ORIGINS: string[] = [
   "https://draped-dsr.pages.dev",
   "https://drape-fzs.pages.dev",
+  "https://drape.pages.dev",
+  "https://draped.pages.dev",
 ];
 
 const extraOrigins = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
-  .map((o) => o.trim().replace(/\/$/, "")) // strip trailing slash
+  .map((o) => o.trim().replace(/\/+$/, "")) // strip trailing slashes
   .filter(Boolean);
 
 const allowedOrigins = [...new Set([...BASELINE_ORIGINS, ...extraOrigins])];
+
+// Log the allowed origins so Render logs show the configuration immediately.
+// This makes CORS mismatches easy to diagnose without code changes.
+if (IS_PROD) {
+  logger.info({ allowedOrigins }, "[CORS] Production allowed origins");
+} else {
+  logger.info("[CORS] Development mode — all origins allowed");
+}
 
 app.use(
   cors({
@@ -41,8 +61,8 @@ app.use(
           // No-origin requests (server-to-server, Cloudflare proxy, curl) are allowed.
           if (!origin) return cb(null, true);
           if (allowedOrigins.includes(origin)) return cb(null, true);
-          logger.warn({ origin }, "CORS: blocked request from unlisted origin");
-          cb(new Error(`CORS: origin '${origin}' is not allowed`));
+          logger.warn({ origin, allowedOrigins }, "[CORS] Blocked request from unlisted origin — add it to ALLOWED_ORIGINS on Render");
+          cb(new Error(`CORS: origin '${origin}' is not allowed. Add it to ALLOWED_ORIGINS on Render.`));
         }
       : true,
     credentials: true,

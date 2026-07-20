@@ -60,6 +60,14 @@ export function useEnquiryStream() {
     async (text: string, imageUrls: string[] = [], designerSlug?: string) => {
       if (!text.trim() || isStreaming) return;
 
+      // ── Diagnostic logging (visible in browser DevTools Console tab) ────────
+      const requestUrl = `${API_BASE}/api/ai/enquiry`;
+      console.log("[AI] User submitted message");
+      console.log("[AI] Sending request to:", requestUrl);
+      if (!API_BASE) {
+        console.warn("[AI] WARNING: VITE_API_BASE_URL is not set — request will go to the frontend host, not the Render backend. Set VITE_API_BASE_URL at build time.");
+      }
+
       const userMsg: Message = {
         id: crypto.randomUUID(),
         role: "user",
@@ -80,7 +88,9 @@ export function useEnquiryStream() {
 
       try {
         const token = getToken();
-        const res = await fetch(`${API_BASE}/api/ai/enquiry`, {
+        console.log("[AI] Auth token present:", !!token);
+
+        const res = await fetch(requestUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -90,9 +100,34 @@ export function useEnquiryStream() {
           signal: ctrl.signal,
         });
 
+        console.log("[AI] Response status:", res.status, res.statusText);
+
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error((errData as { error?: string }).error ?? `HTTP ${res.status}`);
+          // Try to parse a JSON error body, fall back to status-based messages.
+          const errData = await res.json().catch(() => ({})) as { error?: string; message?: string };
+          const serverMsg = errData.error ?? errData.message;
+
+          let userFacingError: string;
+          if (serverMsg) {
+            userFacingError = serverMsg;
+          } else if (res.status === 401) {
+            userFacingError = "You need to be logged in to chat with Aria. Please sign in and try again.";
+          } else if (res.status === 403) {
+            userFacingError = "Access denied. Please refresh the page and try again.";
+          } else if (res.status === 404) {
+            userFacingError = "The AI service could not be reached (404). Please contact support if this persists.";
+          } else if (res.status === 429) {
+            userFacingError = "You're sending messages too fast. Please wait a moment and try again.";
+          } else if (res.status === 502 || res.status === 503) {
+            userFacingError = "The AI assistant is temporarily unavailable. Please try again in a moment.";
+          } else if (res.status === 504) {
+            userFacingError = "The AI took too long to respond. Please try again.";
+          } else {
+            userFacingError = `Something went wrong (${res.status}). Please try again.`;
+          }
+
+          console.error("[AI] Request failed:", res.status, serverMsg ?? "(no JSON error body)");
+          throw new Error(userFacingError);
         }
 
         const data = await res.json() as {
@@ -106,8 +141,14 @@ export function useEnquiryStream() {
           generateImages?: boolean;
         };
 
+        console.log("[AI] Response parsed. Reply length:", data.reply?.length ?? 0, "| sessionId:", data.sessionId);
+
+        if (!data.reply && data.reply !== "") {
+          console.warn("[AI] Response missing 'reply' field. Full response:", data);
+        }
+
         setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: data.reply } : m)),
+          prev.map((m) => (m.id === assistantId ? { ...m, content: data.reply ?? "" } : m)),
         );
 
         setSessionId(data.sessionId);
@@ -129,12 +170,18 @@ export function useEnquiryStream() {
         if (data.generateImages) {
           setGenerateImages(true);
         }
+
+        console.log("[AI] Message rendered successfully");
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
+        const isAbort = (err as Error).name === "AbortError";
+        if (!isAbort) {
+          const errorMsg = (err instanceof Error ? err.message : null)
+            ?? "Sorry, something went wrong. Please try again.";
+          console.error("[AI] Request failed:", err);
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: "Sorry, something went wrong. Please try again." }
+                ? { ...m, content: errorMsg }
                 : m,
             ),
           );

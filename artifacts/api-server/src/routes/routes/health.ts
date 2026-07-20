@@ -53,9 +53,11 @@ router.get("/health", async (_req, res) => {
 
   // 3. AI text provider — config check (no live call, instant)
   const groqKey = process.env.GROQ_API_KEY;
+  // Accept both BLUEMINDS_BASE_URL and the legacy BLUEMINDS_API_URL alias.
+  const blueMindsBaseUrl = process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL;
   const aiVarsReady = groqKey
     ? true  // Groq mode: only needs GROQ_API_KEY
-    : (!!process.env.BLUEMINDS_BASE_URL &&
+    : (!!blueMindsBaseUrl &&
        !!process.env.BLUEMINDS_API_KEY &&
        !!process.env.BLUEMINDS_MODEL_ID);
 
@@ -63,11 +65,21 @@ router.get("/health", async (_req, res) => {
     ? (process.env.GROQ_MODEL ?? "llama-3.1-8b-instant") + " (Groq)"
     : process.env.BLUEMINDS_MODEL_ID;
 
+  const baseUrlSource = process.env.BLUEMINDS_BASE_URL
+    ? "BLUEMINDS_BASE_URL"
+    : process.env.BLUEMINDS_API_URL
+      ? "BLUEMINDS_API_URL (legacy alias)"
+      : "(not set)";
+
   checks.ai_text = {
     ok: aiVarsReady,
     detail: aiVarsReady
-      ? `Model: ${activeModel}`
-      : "One or more BLUEMINDS_* vars missing",
+      ? `Model: ${activeModel} | base URL from: ${baseUrlSource}`
+      : `Missing vars: ${[
+          !blueMindsBaseUrl && "BLUEMINDS_BASE_URL (or BLUEMINDS_API_URL)",
+          !process.env.BLUEMINDS_API_KEY && "BLUEMINDS_API_KEY",
+          !process.env.BLUEMINDS_MODEL_ID && "BLUEMINDS_MODEL_ID",
+        ].filter(Boolean).join(", ")}`,
   };
 
   // 4. AI image provider — optional, uses separate IMAGE_API_KEY
@@ -92,14 +104,20 @@ router.get("/health", async (_req, res) => {
 // POST /api/test-ai — live round-trip to BlueMinds, no auth required
 // ---------------------------------------------------------------------------
 router.post("/test-ai", async (_req, res) => {
+  // Accept both BLUEMINDS_BASE_URL and the legacy BLUEMINDS_API_URL alias.
+  const blueMindsBaseUrl = process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL;
   if (
-    !process.env.BLUEMINDS_BASE_URL ||
+    !blueMindsBaseUrl ||
     !process.env.BLUEMINDS_API_KEY ||
     !process.env.BLUEMINDS_MODEL_ID
   ) {
     res.status(503).json({
       ok: false,
-      error: "AI provider not configured — set BLUEMINDS_BASE_URL, BLUEMINDS_API_KEY, BLUEMINDS_MODEL_ID",
+      error: `AI provider not configured. Missing: ${[
+        !blueMindsBaseUrl && "BLUEMINDS_BASE_URL (or BLUEMINDS_API_URL)",
+        !process.env.BLUEMINDS_API_KEY && "BLUEMINDS_API_KEY",
+        !process.env.BLUEMINDS_MODEL_ID && "BLUEMINDS_MODEL_ID",
+      ].filter(Boolean).join(", ")}`,
     });
     return;
   }
