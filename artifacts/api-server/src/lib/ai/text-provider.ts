@@ -37,6 +37,7 @@ import type {
 } from "./types";
 import { CONCEPT_CARD_SYSTEM } from "./prompts/concepts";
 import { VISION_ANALYSIS_SYSTEM } from "./prompts/vision";
+import { logger } from "../logger";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const BLUEMINDS_API_KEY = process.env.BLUEMINDS_API_KEY;
@@ -66,7 +67,7 @@ function buildClient(): { client: OpenAI; model: string } {
 
   if (BLUEMINDS_API_KEY) {
     const baseURL = process.env.BLUEMINDS_BASE_URL;
-    const model = process.env.BLUEMINDS_MODEL_ID;
+    let model = process.env.BLUEMINDS_MODEL_ID;
     if (!baseURL) {
       throw new Error(
         "BLUEMINDS_BASE_URL is missing. Set it on Render (e.g. https://api.bluesminds.com/v1) so the AI can reach BlueMinds.",
@@ -76,6 +77,14 @@ function buildClient(): { client: OpenAI; model: string } {
       throw new Error(
         "BLUEMINDS_MODEL_ID is missing. Set it on Render (e.g. gpt-4o-mini) so the AI knows which model to use.",
       );
+    }
+    // BlueMinds retired the `:free` tier of several models. Map the dead
+    // `:free` slug to its paid equivalent so existing deployments keep working
+    // without a redeploy. See BlueMinds 404: "use this slug instead: ...".
+    if (model.endsWith(":free")) {
+      const mapped = model.slice(0, -":free".length);
+      logger.warn({ from: model, to: mapped }, "BLUEMINDS_MODEL_ID ':free' tier retired — mapping to paid slug");
+      model = mapped;
     }
     const client = new OpenAI({ baseURL, apiKey: BLUEMINDS_API_KEY });
     cachedClient = client;

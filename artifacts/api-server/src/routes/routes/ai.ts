@@ -228,7 +228,13 @@ router.post("/ai/enquiry", aiLimiter, optionalAuth, async (req: Request, res: Re
             : "none",
       error: msg,
     });
-    res.status(502).json({ error: "The AI assistant is temporarily unavailable. Please try again in a moment." });
+    // Surface model/provider errors (e.g. "model unavailable", 404, 401) clearly
+    // instead of a silent hang, so misconfiguration is obvious.
+    const userMessage =
+      /model is unavailable|404|does not exist|unknown model|not found/i.test(msg)
+        ? `The AI model "${process.env.BLUEMINDS_MODEL_ID ?? ""}" is no longer available from the provider. Update BLUEMINDS_MODEL_ID on Render to a currently supported model.`
+        : "The AI assistant is temporarily unavailable. Please try again in a moment.";
+    res.status(502).json({ error: userMessage });
     return;
   }
 
