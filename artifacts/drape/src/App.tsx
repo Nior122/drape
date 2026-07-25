@@ -21,7 +21,7 @@ import OnboardingPage from "@/pages/onboarding";
 import ClientLayout from "@/pages/client/layout";
 import OrdersPage from "@/pages/client/orders";
 import OrderDetailPage from "@/pages/client/order-detail";
-import ProfilePage from "@/pages/client/profile";
+import ClientProfilePage from "@/pages/client/profile";
 import DiscoverPage from "@/pages/client/discover";
 
 import DesignSessionPage from "@/pages/design-session";
@@ -33,6 +33,12 @@ import ProducerOrderDetail from "@/pages/producer/order-detail";
 import ProducerClients from "@/pages/producer/clients";
 import ProducerStorefront from "@/pages/producer/storefront";
 import ProducerAnalytics from "@/pages/producer/analytics";
+
+// New Designer pages
+import AiStudioPage from "@/pages/producer/ai-studio";
+import PortfolioPage from "@/pages/producer/portfolio";
+import MessagesPage from "@/pages/producer/messages";
+import DesignerProfilePage from "@/pages/producer/profile";
 
 setAuthTokenGetter(getToken);
 
@@ -123,7 +129,7 @@ function Router() {
         <ClientRoute><OrdersPage /></ClientRoute>
       </Route>
       <Route path="/client/profile">
-        <ClientRoute><ProfilePage /></ClientRoute>
+        <ClientRoute><ClientProfilePage /></ClientRoute>
       </Route>
       <Route path="/client/discover">
         <ClientRoute><DiscoverPage /></ClientRoute>
@@ -136,6 +142,15 @@ function Router() {
       <Route path="/designer/dashboard">
         <DesignerRoute><ProducerDashboard /></DesignerRoute>
       </Route>
+      <Route path="/designer/ai-studio">
+        <DesignerRoute><AiStudioPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/projects">
+        <DesignerRoute><ProducerOrders /></DesignerRoute>
+      </Route>
+      <Route path="/designer/projects/:id">
+        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
+      </Route>
       <Route path="/designer/orders/:id">
         <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
       </Route>
@@ -145,14 +160,23 @@ function Router() {
       <Route path="/designer/clients">
         <DesignerRoute><ProducerClients /></DesignerRoute>
       </Route>
+      <Route path="/designer/portfolio">
+        <DesignerRoute><PortfolioPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/messages">
+        <DesignerRoute><MessagesPage /></DesignerRoute>
+      </Route>
       <Route path="/designer/storefront">
         <DesignerRoute><ProducerStorefront /></DesignerRoute>
       </Route>
       <Route path="/designer/analytics">
         <DesignerRoute><ProducerAnalytics /></DesignerRoute>
       </Route>
+      <Route path="/designer/profile">
+        <DesignerRoute><DesignerProfilePage /></DesignerRoute>
+      </Route>
 
-      {/* ── Legacy /producer/* routes — redirect to /designer/* ── */}
+      {/* ── Legacy /producer/* routes — redirect to /designer/* where possible ── */}
       <Route path="/producer">
         <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
       </Route>
@@ -182,7 +206,7 @@ function Router() {
       <Route path="/admin/dashboard">
         <AdminRoute>
           <div className="min-h-screen flex items-center justify-center bg-background">
-            <p className="text-muted-foreground text-lg">Admin dashboard — coming in Phase 2</p>
+            <p className="text-muted-foreground text-lg">Admin dashboard — coming in a future phase</p>
           </div>
         </AdminRoute>
       </Route>

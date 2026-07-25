@@ -3,6 +3,8 @@ export * from "./profiles";
 export * from "./client-preferences";
 export * from "./producer-profiles";
 export * from "./admin-profiles";
+export * from "./portfolio-items";
+export * from "./ai-conversations";
 export * from "./enquiry";
 export * from "./orders";
 export * from "./measurements";

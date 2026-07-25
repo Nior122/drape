@@ -6,20 +6,28 @@ import {
   getGetClientNotificationsQueryKey,
 } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
-import { Bell, LayoutDashboard, Package, Users, Store, BarChart2, LogOut, ChevronRight, Scissors, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard, Package, Users, Store, BarChart2, LogOut,
+  ChevronRight, Scissors, Menu, X, Bell, Sparkles, ImageIcon,
+  MessageSquare, UserCircle,
+} from "lucide-react";
 import NotificationsPanel from "@/components/client/NotificationsPanel";
 import { useNotificationStream } from "@/hooks/use-notification-stream";
 
 const NAV = [
-  { href: "/producer/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/producer/orders",    label: "Orders",    icon: Package         },
-  { href: "/producer/clients",   label: "Clients",   icon: Users           },
-  { href: "/producer/storefront",label: "Storefront",icon: Store           },
-  { href: "/producer/analytics", label: "Analytics", icon: BarChart2       },
+  { href: "/designer/dashboard", hrefLegacy: "/producer/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/designer/ai-studio", label: "AI Studio", icon: Sparkles },
+  { href: "/designer/projects", hrefLegacy: "/producer/orders", label: "Projects", icon: Package },
+  { href: "/designer/clients",   hrefLegacy: "/producer/clients", label: "Clients",   icon: Users },
+  { href: "/designer/portfolio", label: "Portfolio", icon: ImageIcon },
+  { href: "/designer/messages",  label: "Messages",  icon: MessageSquare },
+  { href: "/designer/storefront", hrefLegacy: "/producer/storefront", label: "Storefront", icon: Store },
+  { href: "/designer/analytics", hrefLegacy: "/producer/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/designer/profile",   label: "Profile",   icon: UserCircle },
 ];
 
-function isActive(loc: string, href: string) {
-  return loc === href || loc.startsWith(href + "/");
+function isActive(loc: string, href: string, hrefLegacy?: string) {
+  return loc === href || loc.startsWith(href + "/") || (!!hrefLegacy && (loc === hrefLegacy || loc.startsWith(hrefLegacy + "/")));
 }
 
 export default function ProducerLayout({ children }: { children: React.ReactNode }) {
@@ -46,11 +54,11 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
           <Scissors className="h-4 w-4 text-[#C08B4E]" />
           <span className="text-base font-bold tracking-[0.2em] text-white">DRAPE</span>
         </div>
-        <span className="text-[10px] tracking-[0.15em] text-white/30 uppercase pl-6">Studio Portal</span>
+        <span className="text-[10px] tracking-[0.15em] text-white/30 uppercase pl-6">Designer Portal</span>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const active = isActive(location, href);
+        {NAV.map(({ href, hrefLegacy, label, icon: Icon }) => {
+          const active = isActive(location, href, hrefLegacy);
           return (
             <Link
               key={href}
@@ -94,7 +102,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-white truncate">{user?.name ?? "Studio"}</p>
+            <p className="text-xs font-medium text-white truncate">{user?.name ?? "Designer"}</p>
             <p className="text-[10px] text-white/30 truncate">{user?.email}</p>
           </div>
         </div>
@@ -149,7 +157,7 @@ export default function ProducerLayout({ children }: { children: React.ReactNode
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex bg-[#111111] border-t border-white/10 pb-safe">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {NAV.slice(0, 5).map(({ href, label, icon: Icon }) => {
           const active = isActive(location, href);
           return (
             <Link

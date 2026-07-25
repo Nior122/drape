@@ -16,7 +16,11 @@ router.use(authRouter);
 router.use(aiRouter);
 router.use(storageRouter);
 router.use(clientRouter);
+
+// Mount producer/designer routes — the producer router contains absolute
+// path routes for both /producer/* (backward compat) and /designer/* (new)
 router.use(producerRouter);
+
 router.use(productionGuideRouter);
 router.use(whatsappRouter);
 router.use(notificationsStreamRouter);
