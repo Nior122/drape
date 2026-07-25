@@ -6,6 +6,7 @@ export * from "./admin-profiles";
 export * from "./portfolio-items";
 export * from "./ai-conversations";
 export * from "./ai-studio";
+export * from "./vision";
 export * from "./enquiry";
 export * from "./orders";
 export * from "./measurements";
