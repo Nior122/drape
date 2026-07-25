@@ -9,6 +9,7 @@ declare global {
   namespace Express {
     interface Request {
       userId?: string;
+      userRole?: "CLIENT" | "DESIGNER" | "PRODUCER" | "ADMIN";
     }
   }
 }
@@ -30,7 +31,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  logger.debug({ userId }, "requireAuth: authenticated");
+  logger.debug({ userId, role: user.role }, "requireAuth: authenticated");
   req.userId = userId;
+  req.userRole = user.role;
   next();
 }

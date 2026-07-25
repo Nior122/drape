@@ -5,6 +5,7 @@ import {
   profilesTable,
   clientPreferencesTable,
   producerProfilesTable,
+  adminProfilesTable,
   type User,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -38,31 +39,52 @@ export type AuthUserPayload = {
   id: string;
   email: string;
   name: string | null;
-  role: "CLIENT" | "PRODUCER" | "ADMIN";
+  role: "CLIENT" | "DESIGNER" | "PRODUCER" | "ADMIN";
   onboardingComplete: boolean;
+  avatar: string | null;
+
+  // Profile (shared)
   phone: string | null;
   whatsapp: string | null;
   city: string | null;
   country: string | null;
   bio: string | null;
+
+  // Client-specific
   stylePreferences: string[];
+  preferredColours: string[];
   budgetMin: number | null;
   budgetMax: number | null;
   styleNote: string | null;
+
+  // Designer-specific (same as producer-profiles)
+  brandName: string | null;
+  professionalName: string | null;
   studioName: string | null;
   studioType: string | null;
   specialties: string[];
+  specialization: string | null;
+  experience: number | null;
+  portfolioDescription: string | null;
+  portfolioUrls: string[];
   priceMin: number | null;
   priceMax: number | null;
   instagram: string | null;
-  portfolioUrls: string[];
+  website: string | null;
+  socialLinks: Record<string, string>;
+  availability: string | null;
+  location: string | null;
+
+  // Admin-specific
+  permissions: string[];
 };
 
 export async function buildUserPayload(user: User): Promise<AuthUserPayload> {
-  const [profile, clientPref, producerProf] = await Promise.all([
+  const [profile, clientPref, producerProf, adminProf] = await Promise.all([
     db.select().from(profilesTable).where(eq(profilesTable.userId, user.id)).then(r => r[0] ?? null),
     db.select().from(clientPreferencesTable).where(eq(clientPreferencesTable.userId, user.id)).then(r => r[0] ?? null),
     db.select().from(producerProfilesTable).where(eq(producerProfilesTable.userId, user.id)).then(r => r[0] ?? null),
+    db.select().from(adminProfilesTable).where(eq(adminProfilesTable.userId, user.id)).then(r => r[0] ?? null),
   ]);
 
   return {
@@ -71,22 +93,42 @@ export async function buildUserPayload(user: User): Promise<AuthUserPayload> {
     name: user.name ?? null,
     role: user.role,
     onboardingComplete: user.onboardingComplete,
+    avatar: user.avatar ?? null,
+
+    // Profile (shared)
     phone: profile?.phone ?? null,
     whatsapp: profile?.whatsapp ?? null,
     city: profile?.city ?? null,
     country: profile?.country ?? null,
     bio: profile?.bio ?? null,
+
+    // Client-specific
     stylePreferences: clientPref?.stylePreferences ?? [],
+    preferredColours: clientPref?.preferredColours ?? [],
     budgetMin: clientPref?.budgetMin ?? null,
     budgetMax: clientPref?.budgetMax ?? null,
     styleNote: clientPref?.styleNote ?? null,
+
+    // Designer-specific
+    brandName: producerProf?.brandName ?? null,
+    professionalName: producerProf?.professionalName ?? null,
     studioName: producerProf?.studioName ?? null,
     studioType: producerProf?.studioType ?? null,
     specialties: producerProf?.specialties ?? [],
+    specialization: producerProf?.specialization ?? null,
+    experience: producerProf?.experience ?? null,
+    portfolioDescription: producerProf?.portfolioDescription ?? null,
+    portfolioUrls: producerProf?.portfolioUrls ?? [],
     priceMin: producerProf?.priceMin ?? null,
     priceMax: producerProf?.priceMax ?? null,
     instagram: producerProf?.instagram ?? null,
-    portfolioUrls: producerProf?.portfolioUrls ?? [],
+    website: producerProf?.website ?? null,
+    socialLinks: producerProf?.socialLinks ?? {},
+    availability: producerProf?.availability ?? null,
+    location: producerProf?.location ?? null,
+
+    // Admin-specific
+    permissions: adminProf?.permissions ?? [],
   };
 }
 
@@ -102,8 +144,6 @@ export function setTokenCookie(res: { cookie: (name: string, value: string, opti
   res.cookie("drape_token", token, {
     httpOnly: true,
     secure: IS_PROD,
-    // Cross-origin (Cloudflare Pages → Render): "none" + secure required.
-    // Dev stays "lax" so it works without HTTPS.
     sameSite: IS_PROD ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",

@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const roleEnum = pgEnum("role", ["CLIENT", "PRODUCER", "ADMIN"]);
+export const roleEnum = pgEnum("role", ["CLIENT", "DESIGNER", "PRODUCER", "ADMIN"]);
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -11,6 +11,7 @@ export const usersTable = pgTable("users", {
   name: text("name"),
   role: roleEnum("role").notNull().default("CLIENT"),
   googleId: text("google_id").unique(),
+  avatar: text("avatar"),
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

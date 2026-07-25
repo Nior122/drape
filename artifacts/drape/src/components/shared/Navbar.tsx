@@ -3,15 +3,24 @@ import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { getDashboardUrl, getDashboardLabel } from "@/lib/roles";
 
 export function Navbar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navLinks = [
+  const isDesignerOrProducer = user?.role === "DESIGNER" || user?.role === "PRODUCER";
+  const isAdmin = user?.role === "ADMIN";
+
+  const navLinks: { href: string; label: string }[] = [
     { href: "/marketplace", label: "Designers" },
   ];
+
+  // Role-specific nav links
+  if (user && isAdmin) {
+    navLinks.push({ href: "/admin/dashboard", label: "Admin" });
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-xl">
@@ -37,6 +46,18 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {user && isDesignerOrProducer && (
+              <Link
+                href="/designer/dashboard"
+                className={`text-sm tracking-wide transition-colors ${
+                  location.startsWith("/designer") || location.startsWith("/producer")
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Studio
+              </Link>
+            )}
           </nav>
 
           {/* Desktop actions */}
@@ -44,18 +65,18 @@ export function Navbar() {
             {user ? (
               <>
                 <Link
-                  href={user.role === "CLIENT" ? "/dashboard/client" : "/dashboard/producer"}
+                  href={getDashboardUrl(user.role)}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {user.role === "CLIENT" ? "My Orders" : "My Studio"}
+                  {getDashboardLabel(user.role)}
                 </Link>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="rounded-full text-xs"
                   onClick={() => logout.mutate(undefined)}
-                  className="rounded-full border-border/50 text-muted-foreground hover:text-foreground"
                 >
-                  Sign out
+                  Sign Out
                 </Button>
               </>
             ) : (
@@ -64,10 +85,10 @@ export function Navbar() {
                   href="/login"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Sign in
+                  Sign In
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm" className="rounded-full px-5 font-medium">
+                  <Button size="sm" className="rounded-full text-xs">
                     Join Drape
                   </Button>
                 </Link>
@@ -75,63 +96,66 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile menu toggle */}
+          {/* Mobile hamburger */}
           <button
-            className="md:hidden text-muted-foreground hover:text-foreground p-1"
-            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden text-foreground p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
-      </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl">
-          <div className="px-4 py-4 space-y-3">
+        {/* Mobile nav */}
+        {mobileOpen && (
+          <div className="md:hidden pb-4 border-t border-white/5 pt-4 space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-sm text-muted-foreground hover:text-foreground py-2"
+                className="block text-sm text-foreground py-1"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-white/5 flex flex-col gap-2">
-              {user ? (
-                <>
-                  <Link
-                    href={user.role === "CLIENT" ? "/dashboard/client" : "/dashboard/producer"}
-                    className="text-sm text-muted-foreground py-2"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {user.role === "CLIENT" ? "My Orders" : "My Studio"}
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { logout.mutate(undefined); setMobileOpen(false); }}
-                    className="w-full rounded-full"
-                  >
-                    Sign out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full rounded-full">Sign in</Button>
-                  </Link>
-                  <Link href="/signup" onClick={() => setMobileOpen(false)}>
-                    <Button size="sm" className="w-full rounded-full font-medium">Join Drape</Button>
-                  </Link>
-                </>
-              )}
-            </div>
+            {user ? (
+              <>
+                <Link
+                  href={getDashboardUrl(user.role)}
+                  className="block text-sm text-foreground py-1"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {getDashboardLabel(user.role)}
+                </Link>
+                <button
+                  className="text-sm text-muted-foreground py-1"
+                  onClick={() => { logout.mutate(undefined); setMobileOpen(false); }}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="block text-sm text-foreground py-1"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block text-sm text-foreground py-1"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Join Drape
+                </Link>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }

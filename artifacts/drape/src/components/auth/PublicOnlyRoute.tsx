@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "../../context/auth";
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
+import { getDashboardUrl } from "../../lib/roles";
 
 export function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -18,7 +19,7 @@ export function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
     if (!user.onboardingComplete) {
       return <Redirect to="/onboarding" />;
     }
-    return <Redirect to={user.role === "CLIENT" ? "/marketplace" : "/dashboard/producer"} />;
+    return <Redirect to={getDashboardUrl(user.role)} />;
   }
 
   return <>{children}</>;

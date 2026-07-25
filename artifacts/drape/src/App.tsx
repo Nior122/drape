@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PublicOnlyRoute } from "@/components/auth/PublicOnlyRoute";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import MarketplacePage from "@/pages/marketplace";
@@ -45,32 +46,50 @@ const queryClient = new QueryClient({
   },
 });
 
+// ── Role-wrapped layouts ──────────────────────────────────────────────────
+
 function ClientRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <ClientLayout>{children}</ClientLayout>
+      <RoleGuard roles={["CLIENT"]}>
+        <ClientLayout>{children}</ClientLayout>
+      </RoleGuard>
     </ProtectedRoute>
   );
 }
 
-function ProducerRoute({ children }: { children: React.ReactNode }) {
+function DesignerRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <ProducerLayout>{children}</ProducerLayout>
+      <RoleGuard roles={["DESIGNER", "PRODUCER"]}>
+        <ProducerLayout>{children}</ProducerLayout>
+      </RoleGuard>
     </ProtectedRoute>
   );
 }
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <RoleGuard roles={["ADMIN"]}>
+        {children}
+      </RoleGuard>
+    </ProtectedRoute>
+  );
+}
+
+// ── Router ────────────────────────────────────────────────────────────────
 
 function Router() {
   return (
     <Switch>
-      {/* Public routes */}
+      {/* ── Public routes ── */}
       <Route path="/" component={HomePage} />
       <Route path="/marketplace" component={MarketplacePage} />
       <Route path="/designers/:slug" component={StorefrontPage} />
       <Route path="/design/:designerSlug" component={DesignSessionPage} />
 
-      {/* Public-only auth routes */}
+      {/* ── Public-only auth routes ── */}
       <Route path="/login">
         <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
       </Route>
@@ -78,15 +97,19 @@ function Router() {
         <PublicOnlyRoute><SignupPage /></PublicOnlyRoute>
       </Route>
 
-      {/* Shared protected routes */}
+      {/* ── Shared protected routes ── */}
       <Route path="/onboarding">
         <ProtectedRoute><OnboardingPage /></ProtectedRoute>
       </Route>
       <Route path="/dashboard/client">
-        <ProtectedRoute><ClientDashboardPage /></ProtectedRoute>
+        <ProtectedRoute>
+          <RoleGuard roles={["CLIENT"]}><ClientDashboardPage /></RoleGuard>
+        </ProtectedRoute>
       </Route>
       <Route path="/dashboard/producer">
-        <ProtectedRoute><ProducerDashboardPage /></ProtectedRoute>
+        <ProtectedRoute>
+          <RoleGuard roles={["DESIGNER", "PRODUCER"]}><ProducerDashboardPage /></RoleGuard>
+        </ProtectedRoute>
       </Route>
 
       {/* ── Client experience ── */}
@@ -106,27 +129,62 @@ function Router() {
         <ClientRoute><DiscoverPage /></ClientRoute>
       </Route>
 
-      {/* ── Producer / Studio experience ── */}
+      {/* ── Designer / Studio experience ── */}
+      <Route path="/designer">
+        <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
+      </Route>
+      <Route path="/designer/dashboard">
+        <DesignerRoute><ProducerDashboard /></DesignerRoute>
+      </Route>
+      <Route path="/designer/orders/:id">
+        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
+      </Route>
+      <Route path="/designer/orders">
+        <DesignerRoute><ProducerOrders /></DesignerRoute>
+      </Route>
+      <Route path="/designer/clients">
+        <DesignerRoute><ProducerClients /></DesignerRoute>
+      </Route>
+      <Route path="/designer/storefront">
+        <DesignerRoute><ProducerStorefront /></DesignerRoute>
+      </Route>
+      <Route path="/designer/analytics">
+        <DesignerRoute><ProducerAnalytics /></DesignerRoute>
+      </Route>
+
+      {/* ── Legacy /producer/* routes — redirect to /designer/* ── */}
       <Route path="/producer">
-        <ProducerRoute><Redirect to="/producer/dashboard" /></ProducerRoute>
+        <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
       </Route>
       <Route path="/producer/dashboard">
-        <ProducerRoute><ProducerDashboard /></ProducerRoute>
+        <DesignerRoute><ProducerDashboard /></DesignerRoute>
       </Route>
       <Route path="/producer/orders/:id">
-        <ProducerRoute><ProducerOrderDetail /></ProducerRoute>
+        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
       </Route>
       <Route path="/producer/orders">
-        <ProducerRoute><ProducerOrders /></ProducerRoute>
+        <DesignerRoute><ProducerOrders /></DesignerRoute>
       </Route>
       <Route path="/producer/clients">
-        <ProducerRoute><ProducerClients /></ProducerRoute>
+        <DesignerRoute><ProducerClients /></DesignerRoute>
       </Route>
       <Route path="/producer/storefront">
-        <ProducerRoute><ProducerStorefront /></ProducerRoute>
+        <DesignerRoute><ProducerStorefront /></DesignerRoute>
       </Route>
       <Route path="/producer/analytics">
-        <ProducerRoute><ProducerAnalytics /></ProducerRoute>
+        <DesignerRoute><ProducerAnalytics /></DesignerRoute>
+      </Route>
+
+      {/* ── Admin routes ── */}
+      <Route path="/admin">
+        <AdminRoute><Redirect to="/admin/dashboard" /></AdminRoute>
+      </Route>
+      <Route path="/admin/dashboard">
+        <AdminRoute>
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <p className="text-muted-foreground text-lg">Admin dashboard — coming in Phase 2</p>
+          </div>
+        </AdminRoute>
       </Route>
 
       <Route component={NotFound} />

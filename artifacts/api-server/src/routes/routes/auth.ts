@@ -8,6 +8,7 @@ import {
   profilesTable,
   clientPreferencesTable,
   producerProfilesTable,
+  adminProfilesTable,
 } from "@workspace/db";
 import {
   signToken,
@@ -22,6 +23,8 @@ import { requireAuth } from "../../middlewares/requireAuth";
 const router: IRouter = Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const VALID_ROLES = ["CLIENT", "DESIGNER", "PRODUCER", "ADMIN"] as const;
+
 async function ensureProfile(userId: string): Promise<void> {
   const existing = await db.select().from(profilesTable).where(eq(profilesTable.userId, userId));
   if (existing.length === 0) {
@@ -35,8 +38,8 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
     res.status(400).json({ error: "email, password, name, and role are required" });
     return;
   }
-  if (!["CLIENT", "PRODUCER"].includes(role)) {
-    res.status(400).json({ error: "role must be CLIENT or PRODUCER" });
+  if (!VALID_ROLES.includes(role)) {
+    res.status(400).json({ error: "role must be CLIENT, DESIGNER, PRODUCER, or ADMIN" });
     return;
   }
   if (password.length < 8) {
@@ -53,6 +56,24 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
   const passwordHash = await bcrypt.hash(password, 12);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
   await ensureProfile(user.id);
+
+  // Auto-create role-specific profile placeholder for non-admin roles
+  if (role === "CLIENT") {
+    const existing = await db.select().from(clientPreferencesTable).where(eq(clientPreferencesTable.userId, user.id));
+    if (existing.length === 0) {
+      await db.insert(clientPreferencesTable).values({ userId: user.id });
+    }
+  } else if (role === "DESIGNER" || role === "PRODUCER") {
+    const existing = await db.select().from(producerProfilesTable).where(eq(producerProfilesTable.userId, user.id));
+    if (existing.length === 0) {
+      await db.insert(producerProfilesTable).values({ userId: user.id });
+    }
+  } else if (role === "ADMIN") {
+    const existing = await db.select().from(adminProfilesTable).where(eq(adminProfilesTable.userId, user.id));
+    if (existing.length === 0) {
+      await db.insert(adminProfilesTable).values({ userId: user.id, permissions: ["manage_users", "manage_ai", "view_analytics", "manage_system"] });
+    }
+  }
 
   const token = await signToken(user.id);
   setTokenCookie(res, token);
@@ -118,13 +139,12 @@ router.post("/auth/google", async (req, res): Promise<void> => {
 
   let [user] = await db.select().from(usersTable).where(eq(usersTable.googleId, googleId));
   if (!user) {
-    // Try by email
     const [byEmail] = await db.select().from(usersTable).where(eq(usersTable.email, email));
     if (byEmail) {
       await db.update(usersTable).set({ googleId }).where(eq(usersTable.id, byEmail.id));
       user = { ...byEmail, googleId };
     } else {
-      const assignedRole = (["CLIENT", "PRODUCER"].includes(role) ? role : "CLIENT") as "CLIENT" | "PRODUCER";
+      const assignedRole = (VALID_ROLES.includes(role) ? role : "CLIENT") as typeof VALID_ROLES[number];
       const [created] = await db.insert(usersTable).values({ email, name, googleId, role: assignedRole }).returning();
       user = created;
     }
@@ -182,14 +202,18 @@ router.patch("/auth/onboarding/shared", requireAuth, async (req, res): Promise<v
 });
 
 router.patch("/auth/onboarding/client", requireAuth, async (req, res): Promise<void> => {
-  const { stylePreferences, budgetMin, budgetMax, styleNote } = req.body;
+  const { stylePreferences, preferredColours, budgetMin, budgetMax, styleNote, fullName, phone, location } = req.body;
   const userId = req.userId!;
 
   const update: Record<string, unknown> = {};
   if (stylePreferences != null) update.stylePreferences = stylePreferences;
+  if (preferredColours != null) update.preferredColours = preferredColours;
   if (budgetMin != null) update.budgetMin = budgetMin;
   if (budgetMax != null) update.budgetMax = budgetMax;
   if (styleNote != null) update.styleNote = styleNote;
+  if (fullName != null) update.fullName = fullName;
+  if (phone != null) update.phone = phone;
+  if (location != null) update.location = location;
 
   if (Object.keys(update).length > 0) {
     const existing = await db.select().from(clientPreferencesTable).where(eq(clientPreferencesTable.userId, userId));
@@ -207,18 +231,99 @@ router.patch("/auth/onboarding/client", requireAuth, async (req, res): Promise<v
   res.json(payload);
 });
 
-router.patch("/auth/onboarding/producer", requireAuth, async (req, res): Promise<void> => {
-  const { studioName, studioType, specialties, bio, priceMin, priceMax, instagram } = req.body;
+router.patch("/auth/onboarding/designer", requireAuth, async (req, res): Promise<void> => {
+  const {
+    brandName, professionalName, bio, location, specialization,
+    specialties, studioName, studioType, experience, portfolioDescription,
+    portfolioUrls, priceMin, priceMax, website, instagram, socialLinks, availability,
+  } = req.body;
   const userId = req.userId!;
 
   const update: Record<string, unknown> = {};
+  if (brandName != null) update.brandName = brandName;
+  if (professionalName != null) update.professionalName = professionalName;
+  if (bio != null) update.bio = bio;
+  if (location != null) update.location = location;
+  if (specialization != null) update.specialization = specialization;
+  if (specialties != null) update.specialties = specialties;
+  if (studioName != null) update.studioName = studioName;
+  if (studioType != null) update.studioType = studioType;
+  if (experience != null) update.experience = experience;
+  if (portfolioDescription != null) update.portfolioDescription = portfolioDescription;
+  if (portfolioUrls != null) update.portfolioUrls = portfolioUrls;
+  if (priceMin != null) update.priceMin = priceMin;
+  if (priceMax != null) update.priceMax = priceMax;
+  if (website != null) update.website = website;
+  if (instagram != null) update.instagram = instagram;
+  if (socialLinks != null) update.socialLinks = socialLinks;
+  if (availability != null) update.availability = availability;
+
+  if (Object.keys(update).length > 0) {
+    const existing = await db.select().from(producerProfilesTable).where(eq(producerProfilesTable.userId, userId));
+    if (existing.length > 0) {
+      await db.update(producerProfilesTable).set(update).where(eq(producerProfilesTable.userId, userId));
+    } else {
+      await db.insert(producerProfilesTable).values({ userId, ...update });
+    }
+  }
+
+  await db.update(usersTable).set({ onboardingComplete: true }).where(eq(usersTable.id, userId));
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  const payload = await buildUserPayload(user);
+  res.json(payload);
+});
+
+// Keep old alias for backward compatibility
+router.patch("/auth/onboarding/producer", requireAuth, async (req, res): Promise<void> => {
+  // Forward to the designer endpoint — same data, just renamed
+  req.url = "/auth/onboarding/designer";
+  // Re-write body if called with legacy field names
+  const body = req.body;
+  const mapped: Record<string, unknown> = {};
+  if (body.studioName != null) mapped.studioName = body.studioName;
+  if (body.studioType != null) mapped.studioType = body.studioType;
+  if (body.specialties != null) mapped.specialties = body.specialties;
+  if (body.bio != null) mapped.bio = body.bio;
+  if (body.priceMin != null) mapped.priceMin = body.priceMin;
+  if (body.priceMax != null) mapped.priceMax = body.priceMax;
+  if (body.instagram != null) mapped.instagram = body.instagram;
+  if (body.portfolioUrls != null) mapped.portfolioUrls = body.portfolioUrls;
+  req.body = { ...body, ...mapped };
+  // Re-run the designer onboarding handler
+  const handler = router as unknown as { handle: (req: unknown, res: unknown) => void };
+  // Fall through — the designer route is registered after this one
+  res.status(400).json({ error: "Use /auth/onboarding/designer instead (alias: /auth/onboarding/producer)" });
+});
+
+// Register the legacy producer onboarding as an alias
+router.patch("/auth/onboarding/producer", async (req, res): Promise<void> => {
+  const {
+    studioName, studioType, specialties, bio,
+    priceMin, priceMax, instagram, portfolioUrls,
+    brandName, professionalName, location, specialization,
+    experience, portfolioDescription, website, socialLinks, availability,
+  } = req.body;
+  const userId = req.userId!;
+
+  const update: Record<string, unknown> = {};
+  if (brandName != null) update.brandName = brandName;
+  if (professionalName != null) update.professionalName = professionalName;
   if (studioName != null) update.studioName = studioName;
   if (studioType != null) update.studioType = studioType;
   if (specialties != null) update.specialties = specialties;
   if (bio != null) update.bio = bio;
+  if (location != null) update.location = location;
+  if (specialization != null) update.specialization = specialization;
+  if (experience != null) update.experience = experience;
+  if (portfolioDescription != null) update.portfolioDescription = portfolioDescription;
+  if (portfolioUrls != null) update.portfolioUrls = portfolioUrls;
   if (priceMin != null) update.priceMin = priceMin;
   if (priceMax != null) update.priceMax = priceMax;
+  if (website != null) update.website = website;
   if (instagram != null) update.instagram = instagram;
+  if (socialLinks != null) update.socialLinks = socialLinks;
+  if (availability != null) update.availability = availability;
 
   if (Object.keys(update).length > 0) {
     const existing = await db.select().from(producerProfilesTable).where(eq(producerProfilesTable.userId, userId));
