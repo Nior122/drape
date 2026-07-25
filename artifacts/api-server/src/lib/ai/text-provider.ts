@@ -6,8 +6,9 @@
  *
  * Priority order for AI provider:
  *   1. GROQ_API_KEY set → Groq (llama-3.1-8b-instant or GROQ_MODEL)
- *   2. BLUEMINDS_API_KEY set → BlueMINDS OpenAI-compatible endpoint
- *   3. OPENAI_API_KEY set → OpenAI directly (Replit AI integration)
+ *   2. OPENROUTER_API_KEY set → OpenRouter (any model, default: openai/gpt-4o-mini)
+ *   3. BLUEMINDS_API_KEY set → BlueMinds OpenAI-compatible endpoint
+ *   4. OPENAI_API_KEY set → OpenAI directly (Replit AI integration)
  *
  * Features handled:
  *   - Client enquiry conversations (streaming)
@@ -40,6 +41,7 @@ import { VISION_ANALYSIS_SYSTEM } from "./prompts/vision";
 import { logger } from "../logger";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const BLUEMINDS_API_KEY = process.env.BLUEMINDS_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -59,6 +61,7 @@ const DEPRECATED_MODEL_MAP: Record<string, string> = {
 // Never logs actual secret values.
 logger.info({
   groq: !!GROQ_API_KEY,
+  openrouter: !!OPENROUTER_API_KEY,
   blueminds: !!BLUEMINDS_API_KEY,
   openai: !!OPENAI_API_KEY,
   blueminds_base_url_set: !!(process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL),
@@ -77,7 +80,7 @@ let cachedClient: OpenAI | null = null;
 let cachedModel: string | null = null;
 
 function mapDeprecatedModel(model: string): string {
-  // Map the `:free` tier suffix (e.g. from OpenRouter)
+  // Map legacy ":free" suffix (retired by the provider) to the paid slug.
   if (model.endsWith(":free")) {
     const mapped = model.slice(0, -":free".length);
     logger.warn({ from: model, to: mapped }, "[AI] BLUEMINDS_MODEL_ID ':free' tier retired — mapping to paid slug");
@@ -98,6 +101,7 @@ function mapDeprecatedModel(model: string): string {
 function buildClient(): { client: OpenAI; model: string } {
   if (cachedClient && cachedModel) return { client: cachedClient, model: cachedModel };
 
+  // ── 1. Groq ──────────────────────────────────────────────────────────────
   if (GROQ_API_KEY) {
     const rawModel = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
     const model = mapDeprecatedModel(rawModel);
@@ -108,6 +112,26 @@ function buildClient(): { client: OpenAI; model: string } {
     return { client, model };
   }
 
+  // ── 2. OpenRouter ────────────────────────────────────────────────────────
+  if (OPENROUTER_API_KEY) {
+    const baseURL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
+    const rawModel = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
+    const model = mapDeprecatedModel(rawModel);
+    const client = new OpenAI({
+      baseURL,
+      apiKey: OPENROUTER_API_KEY,
+      defaultHeaders: {
+        "HTTP-Referer": process.env.OPENROUTER_SITE_URL ?? "https://drape.app",
+        "X-Title": process.env.OPENROUTER_APP_NAME ?? "Drape",
+      },
+    });
+    cachedClient = client;
+    cachedModel = model;
+    logger.info({ provider: "openrouter", model, baseURL }, "[AI] text provider initialised");
+    return { client, model };
+  }
+
+  // ── 3. BlueMinds ─────────────────────────────────────────────────────────
   if (BLUEMINDS_API_KEY) {
     // Accept both BLUEMINDS_BASE_URL and the legacy BLUEMINDS_API_URL name.
     const baseURL = process.env.BLUEMINDS_BASE_URL ?? process.env.BLUEMINDS_API_URL;
@@ -137,9 +161,9 @@ function buildClient(): { client: OpenAI; model: string } {
     return { client, model };
   }
 
+  // ── 4. OpenAI (direct) ───────────────────────────────────────────────────
   if (OPENAI_API_KEY) {
-    const rawModel = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-    const model = mapDeprecatedModel(rawModel);
+    const model = mapDeprecatedModel(process.env.OPENAI_MODEL ?? "gpt-4o-mini");
     const client = new OpenAI({ apiKey: OPENAI_API_KEY });
     cachedClient = client;
     cachedModel = model;
@@ -147,9 +171,13 @@ function buildClient(): { client: OpenAI; model: string } {
     return { client, model };
   }
 
-  throw new Error(
-    "No AI API key configured. Set BLUEMINDS_API_KEY (preferred), GROQ_API_KEY, or OPENAI_API_KEY on Render.",
+  // ── No provider configured ───────────────────────────────────────────────
+  const err = new Error(
+    "No AI API key configured. Set OPENROUTER_API_KEY (preferred), BLUEMINDS_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY on Render.",
   );
+  cachedClient = null;
+  cachedModel = null;
+  throw err;
 }
 
 /**
