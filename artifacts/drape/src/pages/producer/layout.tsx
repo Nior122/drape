@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, Users, Store, BarChart2, LogOut,
   ChevronRight, Scissors, Menu, X, Bell, Sparkles, ImageIcon,
-  MessageSquare, UserCircle,
+  MessageSquare, UserCircle, Calendar, Shield, TrendingUp,
 } from "lucide-react";
 import NotificationsPanel from "@/components/client/NotificationsPanel";
 import { useNotificationStream } from "@/hooks/use-notification-stream";
@@ -23,6 +23,9 @@ const NAV = [
   { href: "/designer/messages",  label: "Messages",  icon: MessageSquare },
   { href: "/designer/storefront", hrefLegacy: "/producer/storefront", label: "Storefront", icon: Store },
   { href: "/designer/analytics", hrefLegacy: "/producer/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/designer/calendar", label: "Calendar", icon: Calendar },
+  { href: "/designer/team",     label: "Team",     icon: Shield },
+  { href: "/designer/reports",  label: "Reports",  icon: TrendingUp },
   { href: "/designer/profile",   label: "Profile",   icon: UserCircle },
 ];
 

@@ -33,6 +33,11 @@ import ProducerOrderDetail from "@/pages/producer/order-detail";
 import ProducerClients from "@/pages/producer/clients";
 import ProducerStorefront from "@/pages/producer/storefront";
 import ProducerAnalytics from "@/pages/producer/analytics";
+import ProjectsBoardPage from "@/pages/producer/projects-board";
+import ProjectWorkspacePage from "@/pages/producer/project-workspace";
+import CalendarPage from "@/pages/producer/calendar";
+import TeamPage from "@/pages/producer/team";
+import ReportsPage from "@/pages/producer/reports";
 
 // New Designer pages
 import AiStudioPage from "@/pages/producer/ai-studio";
@@ -146,10 +151,10 @@ function Router() {
         <DesignerRoute><AiStudioPage /></DesignerRoute>
       </Route>
       <Route path="/designer/projects">
-        <DesignerRoute><ProducerOrders /></DesignerRoute>
+        <DesignerRoute><ProjectsBoardPage /></DesignerRoute>
       </Route>
       <Route path="/designer/projects/:id">
-        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
+        <DesignerRoute><ProjectWorkspacePage /></DesignerRoute>
       </Route>
       <Route path="/designer/orders/:id">
         <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
@@ -171,6 +176,15 @@ function Router() {
       </Route>
       <Route path="/designer/analytics">
         <DesignerRoute><ProducerAnalytics /></DesignerRoute>
+      </Route>
+      <Route path="/designer/calendar">
+        <DesignerRoute><CalendarPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/team">
+        <DesignerRoute><TeamPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/reports">
+        <DesignerRoute><ReportsPage /></DesignerRoute>
       </Route>
       <Route path="/designer/profile">
         <DesignerRoute><DesignerProfilePage /></DesignerRoute>
