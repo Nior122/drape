@@ -23,3 +23,9 @@ export * from "./expenses";
 export * from "./subscriptions";
 export * from "./business-settings";
 export * from "./audit-logs";
+
+// ── Phase 8 — Marketplace ──
+export * from "./reviews";
+export * from "./bookings";
+export * from "./favorites";
+export * from "./marketplace";

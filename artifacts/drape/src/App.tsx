@@ -57,6 +57,9 @@ import SubscriptionPage from "@/pages/designer/subscription";
 import BusinessSettingsPage from "@/pages/designer/business-settings";
 import BusinessReportsPage from "@/pages/designer/reports";
 
+// ── Phase 8 — Marketplace pages ──
+import PublicDesignerProfile from "@/pages/designer-profile";
+
 setAuthTokenGetter(getToken);
 
 const queryClient = new QueryClient({
@@ -110,6 +113,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/marketplace" component={MarketplacePage} />
       <Route path="/designers/:slug" component={StorefrontPage} />
+      <Route path="/designer/:idOrSlug" component={PublicDesignerProfile} />
       <Route path="/design/:designerSlug" component={DesignSessionPage} />
 
       {/* ── Public-only auth routes ── */}
