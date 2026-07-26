@@ -3,15 +3,25 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { logger } from "../logger";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const KNOWLEDGE_DIR = path.resolve(__dirname, "../../../../knowledge/nigeria-fashion");
+/**
+ * Knowledge directory resolution.
+ *
+ * Uses process.cwd() as the anchor because the server is always started
+ * from the api-server package root (where package.json lives).
+ * This works both in dev (source) and production (bundled dist) modes.
+ */
+const KNOWLEDGE_DIR = path.resolve(
+  process.cwd(),
+  "knowledge",
+  "nigeria-fashion",
+);
 
 let cachedKnowledge = "";
 
 /**
  * Loads all markdown files from the knowledge directory and concatenates them
  * into a single knowledge string to be injected into the system prompt.
- * 
+ *
  * If the directory doesn't exist, returns an empty string (fails gracefully).
  */
 export function loadNigerianFashionKnowledge(): string {

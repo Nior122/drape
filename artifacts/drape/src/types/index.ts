@@ -1,6 +1,6 @@
 // ── Drape Global TypeScript Types ─────────────────────────────────────────
 
-export type Role = "CLIENT" | "PRODUCER" | "ADMIN";
+export type Role = "CLIENT" | "DESIGNER" | "PRODUCER" | "ADMIN";
 export type StorefrontStatus = "DRAFT" | "ACTIVE" | "SUSPENDED";
 export type MeasurementUnit = "CM" | "INCH";
 export type EnquiryStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED" | "CONVERTED";

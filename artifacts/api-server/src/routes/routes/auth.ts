@@ -274,30 +274,10 @@ router.patch("/auth/onboarding/designer", requireAuth, async (req, res): Promise
   res.json(payload);
 });
 
-// Keep old alias for backward compatibility
+// CRIT-01 FIX: Single /auth/onboarding/producer handler with requireAuth.
+// Previously had TWO handlers: first returned 400 "use /designer", second lacked requireAuth and was dead code.
+// Now: one correct handler with requireAuth that accepts both producer and designer field names.
 router.patch("/auth/onboarding/producer", requireAuth, async (req, res): Promise<void> => {
-  // Forward to the designer endpoint — same data, just renamed
-  req.url = "/auth/onboarding/designer";
-  // Re-write body if called with legacy field names
-  const body = req.body;
-  const mapped: Record<string, unknown> = {};
-  if (body.studioName != null) mapped.studioName = body.studioName;
-  if (body.studioType != null) mapped.studioType = body.studioType;
-  if (body.specialties != null) mapped.specialties = body.specialties;
-  if (body.bio != null) mapped.bio = body.bio;
-  if (body.priceMin != null) mapped.priceMin = body.priceMin;
-  if (body.priceMax != null) mapped.priceMax = body.priceMax;
-  if (body.instagram != null) mapped.instagram = body.instagram;
-  if (body.portfolioUrls != null) mapped.portfolioUrls = body.portfolioUrls;
-  req.body = { ...body, ...mapped };
-  // Re-run the designer onboarding handler
-  const handler = router as unknown as { handle: (req: unknown, res: unknown) => void };
-  // Fall through — the designer route is registered after this one
-  res.status(400).json({ error: "Use /auth/onboarding/designer instead (alias: /auth/onboarding/producer)" });
-});
-
-// Register the legacy producer onboarding as an alias
-router.patch("/auth/onboarding/producer", async (req, res): Promise<void> => {
   const {
     studioName, studioType, specialties, bio,
     priceMin, priceMax, instagram, portfolioUrls,
@@ -309,12 +289,12 @@ router.patch("/auth/onboarding/producer", async (req, res): Promise<void> => {
   const update: Record<string, unknown> = {};
   if (brandName != null) update.brandName = brandName;
   if (professionalName != null) update.professionalName = professionalName;
-  if (studioName != null) update.studioName = studioName;
-  if (studioType != null) update.studioType = studioType;
-  if (specialties != null) update.specialties = specialties;
   if (bio != null) update.bio = bio;
   if (location != null) update.location = location;
   if (specialization != null) update.specialization = specialization;
+  if (specialties != null) update.specialties = specialties;
+  if (studioName != null) update.studioName = studioName;
+  if (studioType != null) update.studioType = studioType;
   if (experience != null) update.experience = experience;
   if (portfolioDescription != null) update.portfolioDescription = portfolioDescription;
   if (portfolioUrls != null) update.portfolioUrls = portfolioUrls;
