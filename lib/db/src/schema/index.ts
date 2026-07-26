@@ -12,3 +12,14 @@ export * from "./orders";
 export * from "./measurements";
 export * from "./notifications";
 export * from "./production";
+
+// ── Phase 7 — Business Management ──
+export * from "./inventory";
+export * from "./suppliers";
+export * from "./purchase-orders";
+export * from "./invoices";
+export * from "./payments";
+export * from "./expenses";
+export * from "./subscriptions";
+export * from "./business-settings";
+export * from "./audit-logs";

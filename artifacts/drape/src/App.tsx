@@ -45,6 +45,18 @@ import PortfolioPage from "@/pages/producer/portfolio";
 import MessagesPage from "@/pages/producer/messages";
 import DesignerProfilePage from "@/pages/producer/profile";
 
+// ── Phase 7 — Business Management pages ──
+import InventoryPage from "@/pages/designer/inventory";
+import SuppliersPage from "@/pages/designer/suppliers";
+import PurchaseOrdersPage from "@/pages/designer/purchase-orders";
+import InvoicesPage from "@/pages/designer/invoices";
+import ExpensesPage from "@/pages/designer/expenses";
+import ProfitCalculatorPage from "@/pages/designer/profit-calculator";
+import BusinessAnalyticsPage from "@/pages/designer/business-analytics";
+import SubscriptionPage from "@/pages/designer/subscription";
+import BusinessSettingsPage from "@/pages/designer/business-settings";
+import BusinessReportsPage from "@/pages/designer/reports";
+
 setAuthTokenGetter(getToken);
 
 const queryClient = new QueryClient({
@@ -190,6 +202,38 @@ function Router() {
         <DesignerRoute><DesignerProfilePage /></DesignerRoute>
       </Route>
 
+      {/* ── Phase 7 — Business Management routes ── */}
+      <Route path="/designer/inventory">
+        <DesignerRoute><InventoryPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/suppliers">
+        <DesignerRoute><SuppliersPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/purchase-orders">
+        <DesignerRoute><PurchaseOrdersPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/invoices">
+        <DesignerRoute><InvoicesPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/expenses">
+        <DesignerRoute><ExpensesPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/profit-calculator">
+        <DesignerRoute><ProfitCalculatorPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/business-analytics">
+        <DesignerRoute><BusinessAnalyticsPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/subscription">
+        <DesignerRoute><SubscriptionPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/business-settings">
+        <DesignerRoute><BusinessSettingsPage /></DesignerRoute>
+      </Route>
+      <Route path="/designer/business-reports">
+        <DesignerRoute><BusinessReportsPage /></DesignerRoute>
+      </Route>
+
       {/* ── Legacy /producer/* routes — redirect to /designer/* where possible ── */}
       <Route path="/producer">
         <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
@@ -211,6 +255,24 @@ function Router() {
       </Route>
       <Route path="/producer/analytics">
         <DesignerRoute><ProducerAnalytics /></DesignerRoute>
+      </Route>
+      <Route path="/producer/ai-studio">
+        <DesignerRoute><AiStudioPage /></DesignerRoute>
+      </Route>
+      <Route path="/producer/calendar">
+        <DesignerRoute><CalendarPage /></DesignerRoute>
+      </Route>
+      <Route path="/producer/team">
+        <DesignerRoute><TeamPage /></DesignerRoute>
+      </Route>
+      <Route path="/producer/reports">
+        <DesignerRoute><ReportsPage /></DesignerRoute>
+      </Route>
+      <Route path="/producer/profile">
+        <DesignerRoute><DesignerProfilePage /></DesignerRoute>
+      </Route>
+      <Route path="/producer/messages">
+        <DesignerRoute><MessagesPage /></DesignerRoute>
       </Route>
 
       {/* ── Admin routes ── */}

@@ -11,6 +11,7 @@ import productionRouter from "./production";
 import productionGuideRouter from "./production-guide";
 import whatsappRouter from "./whatsapp";
 import notificationsStreamRouter from "./notifications-stream";
+import businessRouter from "./business";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(productionRouter);
 router.use(productionGuideRouter);
 router.use(whatsappRouter);
 router.use(notificationsStreamRouter);
+router.use(businessRouter);
 
 export default router;
