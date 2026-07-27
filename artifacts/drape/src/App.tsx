@@ -38,8 +38,6 @@ import ProjectWorkspacePage from "@/pages/producer/project-workspace";
 import CalendarPage from "@/pages/producer/calendar";
 import TeamPage from "@/pages/producer/team";
 import ReportsPage from "@/pages/producer/reports";
-
-// New Designer pages
 import AiStudioPage from "@/pages/producer/ai-studio";
 import PortfolioPage from "@/pages/producer/portfolio";
 import MessagesPage from "@/pages/producer/messages";
@@ -60,20 +58,25 @@ import BusinessReportsPage from "@/pages/designer/reports";
 // ── Phase 8 — Marketplace pages ──
 import PublicDesignerProfile from "@/pages/designer-profile";
 
+// ── Phase 9 — Admin panel pages ──
+import AdminLayout from "@/pages/admin/layout";
+import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminUsersPage from "@/pages/admin/users";
+import AdminDesignersPage from "@/pages/admin/designers";
+import AdminReviewsPage from "@/pages/admin/reviews";
+import AdminSubscriptionsPage from "@/pages/admin/subscriptions";
+import AdminFeatureFlagsPage from "@/pages/admin/feature-flags";
+import AdminAuditLogsPage from "@/pages/admin/audit-logs";
+
 setAuthTokenGetter(getToken);
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
+    queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
   },
 });
 
-// ── Role-wrapped layouts ──────────────────────────────────────────────────
-
+// ── Role-wrapped layouts ──────────────────────────────────────────
 function ClientRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
@@ -94,18 +97,18 @@ function DesignerRoute({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** AdminRoute — wraps children with AdminLayout so all admin pages get the sidebar. */
 function AdminRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
       <RoleGuard roles={["ADMIN"]}>
-        {children}
+        <AdminLayout>{children}</AdminLayout>
       </RoleGuard>
     </ProtectedRoute>
   );
 }
 
-// ── Router ────────────────────────────────────────────────────────────────
-
+// ── Router ────────────────────────────────────────────────────────
 function Router() {
   return (
     <Switch>
@@ -116,180 +119,80 @@ function Router() {
       <Route path="/designer/:idOrSlug" component={PublicDesignerProfile} />
       <Route path="/design/:designerSlug" component={DesignSessionPage} />
 
-      {/* ── Public-only auth routes ── */}
-      <Route path="/login">
-        <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
-      </Route>
-      <Route path="/signup">
-        <PublicOnlyRoute><SignupPage /></PublicOnlyRoute>
-      </Route>
+      {/* ── Auth routes ── */}
+      <Route path="/login"><PublicOnlyRoute><LoginPage /></PublicOnlyRoute></Route>
+      <Route path="/signup"><PublicOnlyRoute><SignupPage /></PublicOnlyRoute></Route>
 
-      {/* ── Shared protected routes ── */}
-      <Route path="/onboarding">
-        <ProtectedRoute><OnboardingPage /></ProtectedRoute>
-      </Route>
+      {/* ── Shared protected ── */}
+      <Route path="/onboarding"><ProtectedRoute><OnboardingPage /></ProtectedRoute></Route>
       <Route path="/dashboard/client">
-        <ProtectedRoute>
-          <RoleGuard roles={["CLIENT"]}><ClientDashboardPage /></RoleGuard>
-        </ProtectedRoute>
+        <ProtectedRoute><RoleGuard roles={["CLIENT"]}><ClientDashboardPage /></RoleGuard></ProtectedRoute>
       </Route>
       <Route path="/dashboard/producer">
-        <ProtectedRoute>
-          <RoleGuard roles={["DESIGNER", "PRODUCER"]}><ProducerDashboardPage /></RoleGuard>
-        </ProtectedRoute>
+        <ProtectedRoute><RoleGuard roles={["DESIGNER", "PRODUCER"]}><ProducerDashboardPage /></RoleGuard></ProtectedRoute>
       </Route>
 
-      {/* ── Client experience ── */}
-      <Route path="/client">
-        <ClientRoute><Redirect to="/client/orders" /></ClientRoute>
-      </Route>
-      <Route path="/client/orders/:id">
-        <ClientRoute><OrderDetailPage /></ClientRoute>
-      </Route>
-      <Route path="/client/orders">
-        <ClientRoute><OrdersPage /></ClientRoute>
-      </Route>
-      <Route path="/client/profile">
-        <ClientRoute><ClientProfilePage /></ClientRoute>
-      </Route>
-      <Route path="/client/discover">
-        <ClientRoute><DiscoverPage /></ClientRoute>
-      </Route>
+      {/* ── Client ── */}
+      <Route path="/client"><ClientRoute><Redirect to="/client/orders" /></ClientRoute></Route>
+      <Route path="/client/orders/:id"><ClientRoute><OrderDetailPage /></ClientRoute></Route>
+      <Route path="/client/orders"><ClientRoute><OrdersPage /></ClientRoute></Route>
+      <Route path="/client/profile"><ClientRoute><ClientProfilePage /></ClientRoute></Route>
+      <Route path="/client/discover"><ClientRoute><DiscoverPage /></ClientRoute></Route>
 
-      {/* ── Designer / Studio experience ── */}
-      <Route path="/designer">
-        <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
-      </Route>
-      <Route path="/designer/dashboard">
-        <DesignerRoute><ProducerDashboard /></DesignerRoute>
-      </Route>
-      <Route path="/designer/ai-studio">
-        <DesignerRoute><AiStudioPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/projects">
-        <DesignerRoute><ProjectsBoardPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/projects/:id">
-        <DesignerRoute><ProjectWorkspacePage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/orders/:id">
-        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
-      </Route>
-      <Route path="/designer/orders">
-        <DesignerRoute><ProducerOrders /></DesignerRoute>
-      </Route>
-      <Route path="/designer/clients">
-        <DesignerRoute><ProducerClients /></DesignerRoute>
-      </Route>
-      <Route path="/designer/portfolio">
-        <DesignerRoute><PortfolioPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/messages">
-        <DesignerRoute><MessagesPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/storefront">
-        <DesignerRoute><ProducerStorefront /></DesignerRoute>
-      </Route>
-      <Route path="/designer/analytics">
-        <DesignerRoute><ProducerAnalytics /></DesignerRoute>
-      </Route>
-      <Route path="/designer/calendar">
-        <DesignerRoute><CalendarPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/team">
-        <DesignerRoute><TeamPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/reports">
-        <DesignerRoute><ReportsPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/profile">
-        <DesignerRoute><DesignerProfilePage /></DesignerRoute>
-      </Route>
+      {/* ── Designer ── */}
+      <Route path="/designer"><DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute></Route>
+      <Route path="/designer/dashboard"><DesignerRoute><ProducerDashboard /></DesignerRoute></Route>
+      <Route path="/designer/ai-studio"><DesignerRoute><AiStudioPage /></DesignerRoute></Route>
+      <Route path="/designer/projects"><DesignerRoute><ProjectsBoardPage /></DesignerRoute></Route>
+      <Route path="/designer/projects/:id"><DesignerRoute><ProjectWorkspacePage /></DesignerRoute></Route>
+      <Route path="/designer/orders/:id"><DesignerRoute><ProducerOrderDetail /></DesignerRoute></Route>
+      <Route path="/designer/orders"><DesignerRoute><ProducerOrders /></DesignerRoute></Route>
+      <Route path="/designer/clients"><DesignerRoute><ProducerClients /></DesignerRoute></Route>
+      <Route path="/designer/portfolio"><DesignerRoute><PortfolioPage /></DesignerRoute></Route>
+      <Route path="/designer/messages"><DesignerRoute><MessagesPage /></DesignerRoute></Route>
+      <Route path="/designer/storefront"><DesignerRoute><ProducerStorefront /></DesignerRoute></Route>
+      <Route path="/designer/analytics"><DesignerRoute><ProducerAnalytics /></DesignerRoute></Route>
+      <Route path="/designer/calendar"><DesignerRoute><CalendarPage /></DesignerRoute></Route>
+      <Route path="/designer/team"><DesignerRoute><TeamPage /></DesignerRoute></Route>
+      <Route path="/designer/reports"><DesignerRoute><ReportsPage /></DesignerRoute></Route>
+      <Route path="/designer/profile"><DesignerRoute><DesignerProfilePage /></DesignerRoute></Route>
 
-      {/* ── Phase 7 — Business Management routes ── */}
-      <Route path="/designer/inventory">
-        <DesignerRoute><InventoryPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/suppliers">
-        <DesignerRoute><SuppliersPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/purchase-orders">
-        <DesignerRoute><PurchaseOrdersPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/invoices">
-        <DesignerRoute><InvoicesPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/expenses">
-        <DesignerRoute><ExpensesPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/profit-calculator">
-        <DesignerRoute><ProfitCalculatorPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/business-analytics">
-        <DesignerRoute><BusinessAnalyticsPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/subscription">
-        <DesignerRoute><SubscriptionPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/business-settings">
-        <DesignerRoute><BusinessSettingsPage /></DesignerRoute>
-      </Route>
-      <Route path="/designer/business-reports">
-        <DesignerRoute><BusinessReportsPage /></DesignerRoute>
-      </Route>
+      {/* ── Business Management ── */}
+      <Route path="/designer/inventory"><DesignerRoute><InventoryPage /></DesignerRoute></Route>
+      <Route path="/designer/suppliers"><DesignerRoute><SuppliersPage /></DesignerRoute></Route>
+      <Route path="/designer/purchase-orders"><DesignerRoute><PurchaseOrdersPage /></DesignerRoute></Route>
+      <Route path="/designer/invoices"><DesignerRoute><InvoicesPage /></DesignerRoute></Route>
+      <Route path="/designer/expenses"><DesignerRoute><ExpensesPage /></DesignerRoute></Route>
+      <Route path="/designer/profit-calculator"><DesignerRoute><ProfitCalculatorPage /></DesignerRoute></Route>
+      <Route path="/designer/business-analytics"><DesignerRoute><BusinessAnalyticsPage /></DesignerRoute></Route>
+      <Route path="/designer/subscription"><DesignerRoute><SubscriptionPage /></DesignerRoute></Route>
+      <Route path="/designer/business-settings"><DesignerRoute><BusinessSettingsPage /></DesignerRoute></Route>
+      <Route path="/designer/business-reports"><DesignerRoute><BusinessReportsPage /></DesignerRoute></Route>
 
-      {/* ── Legacy /producer/* routes — redirect to /designer/* where possible ── */}
-      <Route path="/producer">
-        <DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute>
-      </Route>
-      <Route path="/producer/dashboard">
-        <DesignerRoute><ProducerDashboard /></DesignerRoute>
-      </Route>
-      <Route path="/producer/orders/:id">
-        <DesignerRoute><ProducerOrderDetail /></DesignerRoute>
-      </Route>
-      <Route path="/producer/orders">
-        <DesignerRoute><ProducerOrders /></DesignerRoute>
-      </Route>
-      <Route path="/producer/clients">
-        <DesignerRoute><ProducerClients /></DesignerRoute>
-      </Route>
-      <Route path="/producer/storefront">
-        <DesignerRoute><ProducerStorefront /></DesignerRoute>
-      </Route>
-      <Route path="/producer/analytics">
-        <DesignerRoute><ProducerAnalytics /></DesignerRoute>
-      </Route>
-      <Route path="/producer/ai-studio">
-        <DesignerRoute><AiStudioPage /></DesignerRoute>
-      </Route>
-      <Route path="/producer/calendar">
-        <DesignerRoute><CalendarPage /></DesignerRoute>
-      </Route>
-      <Route path="/producer/team">
-        <DesignerRoute><TeamPage /></DesignerRoute>
-      </Route>
-      <Route path="/producer/reports">
-        <DesignerRoute><ReportsPage /></DesignerRoute>
-      </Route>
-      <Route path="/producer/profile">
-        <DesignerRoute><DesignerProfilePage /></DesignerRoute>
-      </Route>
-      <Route path="/producer/messages">
-        <DesignerRoute><MessagesPage /></DesignerRoute>
-      </Route>
+      {/* ── Admin panel (Phase 9) ── */}
+      <Route path="/admin"><AdminRoute><Redirect to="/admin/dashboard" /></AdminRoute></Route>
+      <Route path="/admin/dashboard"><AdminRoute><AdminDashboardPage /></AdminRoute></Route>
+      <Route path="/admin/users"><AdminRoute><AdminUsersPage /></AdminRoute></Route>
+      <Route path="/admin/designers"><AdminRoute><AdminDesignersPage /></AdminRoute></Route>
+      <Route path="/admin/reviews"><AdminRoute><AdminReviewsPage /></AdminRoute></Route>
+      <Route path="/admin/subscriptions"><AdminRoute><AdminSubscriptionsPage /></AdminRoute></Route>
+      <Route path="/admin/feature-flags"><AdminRoute><AdminFeatureFlagsPage /></AdminRoute></Route>
+      <Route path="/admin/audit-logs"><AdminRoute><AdminAuditLogsPage /></AdminRoute></Route>
 
-      {/* ── Admin routes ── */}
-      <Route path="/admin">
-        <AdminRoute><Redirect to="/admin/dashboard" /></AdminRoute>
-      </Route>
-      <Route path="/admin/dashboard">
-        <AdminRoute>
-          <div className="min-h-screen flex items-center justify-center bg-background">
-            <p className="text-muted-foreground text-lg">Admin dashboard — coming in a future phase</p>
-          </div>
-        </AdminRoute>
-      </Route>
+      {/* ── Legacy /producer/* ── */}
+      <Route path="/producer"><DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute></Route>
+      <Route path="/producer/dashboard"><DesignerRoute><ProducerDashboard /></DesignerRoute></Route>
+      <Route path="/producer/orders/:id"><DesignerRoute><ProducerOrderDetail /></DesignerRoute></Route>
+      <Route path="/producer/orders"><DesignerRoute><ProducerOrders /></DesignerRoute></Route>
+      <Route path="/producer/clients"><DesignerRoute><ProducerClients /></DesignerRoute></Route>
+      <Route path="/producer/storefront"><DesignerRoute><ProducerStorefront /></DesignerRoute></Route>
+      <Route path="/producer/analytics"><DesignerRoute><ProducerAnalytics /></DesignerRoute></Route>
+      <Route path="/producer/ai-studio"><DesignerRoute><AiStudioPage /></DesignerRoute></Route>
+      <Route path="/producer/calendar"><DesignerRoute><CalendarPage /></DesignerRoute></Route>
+      <Route path="/producer/team"><DesignerRoute><TeamPage /></DesignerRoute></Route>
+      <Route path="/producer/reports"><DesignerRoute><ReportsPage /></DesignerRoute></Route>
+      <Route path="/producer/profile"><DesignerRoute><DesignerProfilePage /></DesignerRoute></Route>
+      <Route path="/producer/messages"><DesignerRoute><MessagesPage /></DesignerRoute></Route>
 
       <Route component={NotFound} />
     </Switch>

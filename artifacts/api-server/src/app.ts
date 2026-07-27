@@ -5,33 +5,24 @@ import pinoHttp from "pino-http";
 import path from "path";
 import fs from "fs";
 import router from "./routes";
+import v1Router from "./routes/v1";
 import { logger } from "./lib/logger";
+import { securityHeaders } from "./lib/security-headers";
+import { requestId } from "./lib/request-id";
+import { standardLimiter } from "./lib/rate-limit";
+import { apiVersion } from "./lib/api-version";
 
 const app: Express = express();
 
-// ---------------------------------------------------------------------------
-// CORS — production-locked, development-open
-//
-// In production (NODE_ENV=production) the baseline allowed origin is always
-// https://draped-dsr.pages.dev (the Cloudflare Pages deployment).
-//
-// Add a custom domain or extra origins with the ALLOWED_ORIGINS env var:
-//   ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-//
-// In development every origin is allowed so local tooling is never blocked.
-// ---------------------------------------------------------------------------
+// ─── Request ID (early — before logging) ───────────────────────────
+app.use(requestId);
+
+// ─── Security Headers ──────────────────────────────────────────────
+app.use(securityHeaders);
+
+// ─── CORS —─────────────────────────────────────────────────────────
 const IS_PROD = process.env.NODE_ENV === "production";
 
-// ---------------------------------------------------------------------------
-// CORS allowed origins.
-//
-// The BASELINE_ORIGINS list covers known Cloudflare Pages deployments.
-// If your production frontend domain is NOT in this list, requests will be
-// blocked by CORS. Add it via the ALLOWED_ORIGINS environment variable on Render:
-//   ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-//
-// In development every origin is allowed.
-// ---------------------------------------------------------------------------
 const BASELINE_ORIGINS: string[] = [
   "https://draped-dsr.pages.dev",
   "https://drape-fzs.pages.dev",
@@ -41,13 +32,11 @@ const BASELINE_ORIGINS: string[] = [
 
 const extraOrigins = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
-  .map((o) => o.trim().replace(/\/+$/, "")) // strip trailing slashes
+  .map((o) => o.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
 const allowedOrigins = [...new Set([...BASELINE_ORIGINS, ...extraOrigins])];
 
-// Log the allowed origins so Render logs show the configuration immediately.
-// This makes CORS mismatches easy to diagnose without code changes.
 if (IS_PROD) {
   logger.info({ allowedOrigins }, "[CORS] Production allowed origins");
 } else {
@@ -58,59 +47,58 @@ app.use(
   cors({
     origin: IS_PROD
       ? (origin, cb) => {
-          // No-origin requests (server-to-server, Cloudflare proxy, curl) are allowed.
           if (!origin) return cb(null, true);
           if (allowedOrigins.includes(origin)) return cb(null, true);
-          logger.warn({ origin, allowedOrigins }, "[CORS] Blocked request from unlisted origin — add it to ALLOWED_ORIGINS on Render");
-          cb(new Error(`CORS: origin '${origin}' is not allowed. Add it to ALLOWED_ORIGINS on Render.`));
+          logger.warn({ origin }, "[CORS] Blocked request from unlisted origin");
+          // Return a generic error — don't leak the origin list
+          cb(new Error("Origin not permitted by CORS policy"));
         }
       : true,
     credentials: true,
   }),
 );
+
 app.use(cookieParser());
 app.use(
   pinoHttp({
     logger,
     serializers: {
       req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
+        return { id: req.id, method: req.method, url: req.url?.split("?")[0] };
       },
       res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
+        return { statusCode: res.statusCode };
       },
     },
   }),
 );
+
+// ─── Body parsers ──────────────────────────────────────────────────
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-app.use((_req, res, next) => {
+// ─── Global rate limiter ───────────────────────────────────────────
+app.use("/api", standardLimiter);
+
+// ─── API Versioning ────────────────────────────────────────────────
+// Main /api routes (backward-compatible)
+app.use("/api", router);
+// Versioned /api/v1 routes (same handlers, future-proof)
+app.use("/api/v1", v1Router);
+
+// ─── Cache control for API responses ───────────────────────────────
+app.use("/api", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, private");
   next();
 });
 
-app.use("/api", router);
-
-// ---------------------------------------------------------------------------
-// Frontend — serve the built React app in production so the API server and
-// UI can be deployed together from a single process on a single URL.
-// In development the Vite dev server handles the frontend.
-// ---------------------------------------------------------------------------
+// ─── Frontend (production) ─────────────────────────────────────────
 const frontendDist = path.resolve(process.cwd(), "artifacts/drape/dist/public");
 
 if (IS_PROD && fs.existsSync(frontendDist)) {
-  // Serve static assets (JS, CSS, images, etc.)
   app.use(
     express.static(frontendDist, {
       index: false,
-      // Long-lived caching for hashed filenames; index.html stays no-cache
       setHeaders(res, filePath) {
         if (path.basename(filePath) === "index.html") {
           res.setHeader("Cache-Control", "no-store, private");
@@ -120,26 +108,34 @@ if (IS_PROD && fs.existsSync(frontendDist)) {
       },
     }),
   );
-
-  // SPA fallback — every non-API path returns index.html so client-side
-  // routing (wouter) works on direct navigation and refresh.
   app.get("*", (_req, res) => {
     res.sendFile(path.join(frontendDist, "index.html"));
   });
 } else if (!IS_PROD) {
-  // Development: helpful redirect so visiting the API URL takes you somewhere useful.
   app.get("/", (_req, res) => {
     res.redirect(301, "/api/health");
   });
 }
 
-// Global error handler — must have 4 args so Express recognises it as an error handler
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// ─── Global Error Handler ──────────────────────────────────────────
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  const message = err instanceof Error ? err.message : "Internal server error";
-  logger.error({ err }, "Unhandled error");
+  const errorPayload = {
+    error: err instanceof Error ? err.message : "Internal server error",
+    requestId: _req.id,
+    ...(IS_PROD ? {} : { stack: err instanceof Error ? err.stack : undefined }),
+  };
+
+  // Rate limit errors
+  if (err instanceof Error && err.message.includes("CORS")) {
+    logger.warn({ err: err.message }, "[CORS] Rejected");
+    res.status(403).json({ error: "Origin not permitted" });
+    return;
+  }
+
+  logger.error({ err, requestId: _req.id }, "Unhandled error");
+
   if (!res.headersSent) {
-    res.status(500).json({ error: message });
+    res.status(500).json(errorPayload);
   }
 });
 

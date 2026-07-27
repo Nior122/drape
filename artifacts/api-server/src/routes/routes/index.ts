@@ -13,9 +13,15 @@ import whatsappRouter from "./whatsapp";
 import notificationsStreamRouter from "./notifications-stream";
 import businessRouter from "./business";
 import marketplaceRouter from "./marketplace";
+import adminRouter from "./admin";
+import observabilityRouter from "./observability";
 
 const router: IRouter = Router();
 
+// Observability & health (no auth)
+router.use(observabilityRouter);
+
+// Business routes
 router.use(healthRouter);
 router.use(authRouter);
 router.use(aiRouter);
@@ -30,5 +36,8 @@ router.use(whatsappRouter);
 router.use(notificationsStreamRouter);
 router.use(businessRouter);
 router.use(marketplaceRouter);
+
+// Admin (requireAuth + requireRole("ADMIN") inside router)
+router.use(adminRouter);
 
 export default router;
