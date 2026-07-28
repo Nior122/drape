@@ -94,7 +94,7 @@ router.get("/marketplace/designers", optionalAuth, async (req: Request, res: Res
       slug: sql<string>`lower(regexp_replace(${usersTable.name}, '[^a-zA-Z0-9]+', '-', 'g'))`,
       avgRating: sql<number>`COALESCE((SELECT AVG(rating) FROM ${reviewsTable} WHERE ${reviewsTable.designerId} = ${usersTable.id}), 0)`,
       reviewCount: sql<number>`(SELECT COUNT(*) FROM ${reviewsTable} WHERE ${reviewsTable.designerId} = ${usersTable.id})`,
-      completedProjects: sql<number>`(SELECT COUNT(*) FROM ${import("@workspace/db").then(m => m.ordersTable).catch(() => null)} WHERE producer_id = ${usersTable.id} AND status = 'COMPLETED')`,
+      completedProjects: sql<number>`(SELECT COUNT(*) FROM ${ordersTable} WHERE producer_id = ${usersTable.id} AND status = 'COMPLETED')`,
     })
     .from(usersTable)
     .innerJoin(producerProfilesTable, eq(usersTable.id, producerProfilesTable.userId))
@@ -278,7 +278,7 @@ router.post("/marketplace/reviews", requireAuth, async (req: Request, res: Respo
   if (rating < 1 || rating > 5) { res.status(400).json({ error: "Rating must be 1-5" }); return; }
 
   // Verify order ownership
-  const [order] = await db.select().from(import("@workspace/db").then(m => m.ordersTable).catch(() => null))
+  const [order] = await db.select().from(ordersTable)
     .where(and(
       eq(import("@workspace/db").then(m => m.ordersTable).catch(() => null as any).id, orderId),
       eq(import("@workspace/db").then(m => m.ordersTable).catch(() => null as any).clientId, req.userId!),

@@ -67,6 +67,7 @@ import AdminReviewsPage from "@/pages/admin/reviews";
 import AdminSubscriptionsPage from "@/pages/admin/subscriptions";
 import AdminFeatureFlagsPage from "@/pages/admin/feature-flags";
 import AdminAuditLogsPage from "@/pages/admin/audit-logs";
+import AdminDemoAccountsPage from "@/pages/admin/demo-accounts";
 
 setAuthTokenGetter(getToken);
 
@@ -178,6 +179,7 @@ function Router() {
       <Route path="/admin/subscriptions"><AdminRoute><AdminSubscriptionsPage /></AdminRoute></Route>
       <Route path="/admin/feature-flags"><AdminRoute><AdminFeatureFlagsPage /></AdminRoute></Route>
       <Route path="/admin/audit-logs"><AdminRoute><AdminAuditLogsPage /></AdminRoute></Route>
+      <Route path="/admin/demo-accounts"><AdminRoute><AdminDemoAccountsPage /></AdminRoute></Route>
 
       {/* ── Legacy /producer/* ── */}
       <Route path="/producer"><DesignerRoute><Redirect to="/designer/dashboard" /></DesignerRoute></Route>

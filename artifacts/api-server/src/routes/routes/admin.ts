@@ -237,4 +237,75 @@ router.get("/admin/demo/status", async (req: Request, res: Response): Promise<vo
   });
 });
 
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO ACCOUNTS — list, search, export (v2, @drape.demo)
+   ════════════════════════════════════════════════════════════════════ */
+
+const DEMO_DOMAIN = "drape.demo";
+
+router.get("/admin/demo-accounts", async (req: Request, res: Response): Promise<void> => {
+  const { search, role, page = "1", limit = "50", format } = req.query as Record<string, string | undefined>;
+  const conditions: ReturnType<typeof sql>[] = [sql`${usersTable.email} LIKE ${"%" + "@" + DEMO_DOMAIN}`];
+  if (role) conditions.push(eq(usersTable.role, role as any));
+  if (search) {
+    conditions.push(sql`(${usersTable.name} ILIKE ${"%" + search + "%"} OR ${usersTable.email} ILIKE ${"%" + search + "%"})`);
+  }
+  const accounts = await db.select({
+    id: usersTable.id, name: usersTable.name, email: usersTable.email,
+    role: usersTable.role, onboardingComplete: usersTable.onboardingComplete,
+    createdAt: usersTable.createdAt, city: profilesTable.city,
+    brandName: producerProfilesTable.brandName,
+  })
+  .from(usersTable)
+  .leftJoin(profilesTable, eq(usersTable.id, profilesTable.userId))
+  .leftJoin(producerProfilesTable, eq(usersTable.id, producerProfilesTable.userId))
+  .where(and(...conditions))
+  .orderBy(desc(usersTable.createdAt))
+  .limit(Number(limit))
+  .offset((Number(page) - 1) * Number(limit));
+
+  const [totalResult] = await db.select({ c: count() }).from(usersTable)
+    .leftJoin(profilesTable, eq(usersTable.id, profilesTable.userId))
+    .leftJoin(producerProfilesTable, eq(usersTable.id, producerProfilesTable.userId))
+    .where(and(...conditions));
+
+  const accountsWithPasswords = accounts.map(a => ({
+    ...a,
+    defaultPassword: a.role === "ADMIN" ? "Admin@123"
+      : a.role === "DESIGNER" || a.role === "PRODUCER" ? "Designer@123" : "Client@123",
+    verificationStatus: a.role === "DESIGNER" || a.role === "PRODUCER"
+      ? (a.brandName ? "VERIFIED" : "PENDING") : "N/A",
+  }));
+
+  if (format === "csv") {
+    const headers = ["Name","Email","Password","Role","City","State","BusinessName","VerificationStatus","CreatedAt"];
+    const esc = (v: string) => `"${(v ?? "").replace(/"/g, """"")}"`;
+    const lines = [headers.join(",")];
+    for (const a of accountsWithPasswords) {
+      lines.push(headers.map(h => { switch (h) {
+        case "Name": return esc(a.name ?? ""); case "Email": return esc(a.email);
+        case "Password": return esc(a.defaultPassword); case "Role": return esc(a.role);
+        case "City": return esc(a.city ?? ""); case "State": return esc("");
+        case "BusinessName": return esc(a.brandName ?? ""); case "VerificationStatus": return esc(a.verificationStatus);
+        case "CreatedAt": return esc(a.createdAt?.toISOString() ?? ""); default: return "";
+      }}).join(","));
+    }
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=demo_accounts.csv");
+    res.send(lines.join("\n")); return;
+  }
+
+  res.json({ accounts: accountsWithPasswords, total: Number(totalResult?.c ?? 0), page: Number(page), limit: Number(limit) });
+});
+
+router.get("/admin/demo-accounts/stats", async (_req: Request, res: Response): Promise<void> => {
+  const [totalDesigners] = await db.select({ c: count() }).from(usersTable)
+    .where(and(sql`${usersTable.email} LIKE ${"%" + "@" + DEMO_DOMAIN}`, sql`${usersTable.role} IN ('DESIGNER', 'PRODUCER')`));
+  const [totalClients] = await db.select({ c: count() }).from(usersTable)
+    .where(and(sql`${usersTable.email} LIKE ${"%" + "@" + DEMO_DOMAIN}`, eq(usersTable.role, "CLIENT")));
+  const [totalAdmins] = await db.select({ c: count() }).from(usersTable)
+    .where(and(sql`${usersTable.email} LIKE ${"%" + "@" + DEMO_DOMAIN}`, eq(usersTable.role, "ADMIN")));
+  res.json({ totalDesigners: Number(totalDesigners?.c ?? 0), totalClients: Number(totalClients?.c ?? 0), totalAdmins: Number(totalAdmins?.c ?? 0) });
+});
 export default router;

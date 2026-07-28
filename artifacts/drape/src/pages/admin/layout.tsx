@@ -15,6 +15,7 @@ const NAV = [
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: ToggleLeft },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
+  { href: "/admin/demo-accounts", label: "Demo Accounts", icon: UserCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

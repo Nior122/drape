@@ -53,7 +53,7 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 10);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
   await ensureProfile(user.id);
 
