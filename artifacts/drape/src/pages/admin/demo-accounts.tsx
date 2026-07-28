@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Copy, Download, Printer, FileSpreadsheet, FileText, Check, Eye, EyeOff } from "lucide-react";
+import { Search, Copy, Download, Printer, FileSpreadsheet, FileText, Check, Eye, EyeOff, Database, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
@@ -19,6 +19,28 @@ export default function AdminDemoAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPasswords, setShowPasswords] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ type: string; message: string } | null>(null);
+
+  const seedData = async () => {
+    if (seeding) return;
+    setSeeding(true);
+    setSeedResult(null);
+    try {
+      const res = await fetch(API_BASE + "/api/admin/demo/seed", { method: "POST", credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        setSeedResult({ type: "success", message: data.message + " (" + data.accounts.total + " accounts)" });
+        fetchAccounts();
+      } else {
+        setSeedResult({ type: "error", message: data.error || "Seed failed" });
+      }
+    } catch (e) {
+      setSeedResult({ type: "error", message: "Network error: unable to reach server" });
+    }
+    setSeeding(false);
+  };
+
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchAccounts = useCallback(async () => {
@@ -81,6 +103,12 @@ export default function AdminDemoAccountsPage() {
         <div>
           <h1 className="text-2xl font-serif font-medium text-foreground">Demo Accounts</h1>
           <p className="text-sm text-muted-foreground mt-1">{total} demo accounts — designers, clients &amp; admins</p>
+          {seedResult && (
+            <div className={"flex items-center gap-2 text-sm mt-2 px-3 py-2 rounded-lg " + (seedResult.type === "success" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400")}>
+              {seedResult.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              {seedResult.message}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowPasswords(!showPasswords)} className="gap-2">
@@ -90,6 +118,10 @@ export default function AdminDemoAccountsPage() {
           <Button variant="outline" size="sm" onClick={exportCsv} className="gap-2"><FileText className="h-4 w-4" /> CSV</Button>
           <Button variant="outline" size="sm" onClick={exportExcel} className="gap-2"><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
           <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2"><Printer className="h-4 w-4" /> Print</Button>
+          <Button variant="default" size="sm" onClick={seedData} disabled={seeding} className="gap-2">
+            {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+            {seeding ? "Seeding..." : "Seed Demo Data"}
+          </Button>
         </div>
       </div>
 
