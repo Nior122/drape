@@ -280,7 +280,7 @@ router.get("/admin/demo-accounts", async (req: Request, res: Response): Promise<
 
   if (format === "csv") {
     const headers = ["Name","Email","Password","Role","City","State","BusinessName","VerificationStatus","CreatedAt"];
-    const esc = (v: string) => `"${(v ?? "").replace(/"/g, """"")}"`;
+    const esc = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
     const lines = [headers.join(",")];
     for (const a of accountsWithPasswords) {
       lines.push(headers.map(h => { switch (h) {

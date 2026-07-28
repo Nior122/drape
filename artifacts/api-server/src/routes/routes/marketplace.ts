@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import {
   usersTable, producerProfilesTable, profilesTable, portfolioItemsTable,
-  reviewsTable, bookingsTable, designerAvailabilityTable,
+  ordersTable, reviewsTable, bookingsTable, designerAvailabilityTable,
   savedDesignersTable, savedPortfoliosTable, collectionsTable, collectionItemsTable,
   profileViewsTable, marketplaceClicksTable, searchLogsTable,
 } from "@workspace/db";
@@ -280,9 +280,9 @@ router.post("/marketplace/reviews", requireAuth, async (req: Request, res: Respo
   // Verify order ownership
   const [order] = await db.select().from(ordersTable)
     .where(and(
-      eq(import("@workspace/db").then(m => m.ordersTable).catch(() => null as any).id, orderId),
-      eq(import("@workspace/db").then(m => m.ordersTable).catch(() => null as any).clientId, req.userId!),
-      eq(import("@workspace/db").then(m => m.ordersTable).catch(() => null as any).status, "COMPLETED"),
+      eq(ordersTable.id, orderId),
+      eq(ordersTable.clientId, req.userId!),
+      eq(ordersTable.status, "COMPLETED"),
     ));
   if (!order) { res.status(403).json({ error: "You can only review completed orders you placed" }); return; }
 
