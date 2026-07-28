@@ -6,7 +6,8 @@ import { DesignerCard } from "@/components/marketplace/DesignerCard";
 import { MOCK_DESIGNERS } from "@/data/designers";
 import {
   ArrowRight, Sparkles, MessageCircle, Image, CheckCircle2,
-  FileText, Ruler, Send, Star, Scissors, Palette,
+  FileText, Ruler, Send, Star, Scissors, Palette, Users,
+  Shield, Zap, Globe, Quote,
 } from "lucide-react";
 
 const FEATURED = MOCK_DESIGNERS.filter((d) => d.verified).slice(0, 3);
@@ -16,7 +17,7 @@ const HOW_IT_WORKS = [
     step: "01",
     icon: MessageCircle,
     title: "Describe your vision",
-    desc: "Chat with Aria, our AI style consultant. Tell her the occasion, the feeling, the colours, the fabrics — in your own words.",
+    desc: "Chat with Aria, our AI style consultant. Tell her the occasion, the colours, the fabrics — in your own words.",
   },
   {
     step: "02",
@@ -50,336 +51,269 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const DESIGNER_RECEIVES = [
-  { icon: FileText,     label: "Complete style brief",      desc: "Occasion, aesthetic, fabrics, silhouette, budget, and timeline in a structured document" },
-  { icon: Image,        label: "Selected visual concept",   desc: "The AI-generated image you approved — a reference the designer can work directly from" },
-  { icon: Ruler,        label: "Body measurements",         desc: "Your saved measurements, unit-converted and ready for pattern making" },
-  { icon: MessageCircle, label: "Your exact words",          desc: "The full conversation transcript, so designers understand your intent not just your spec" },
-  { icon: Palette,      label: "Colour references",         desc: "Hex codes and descriptive colour palette you described" },
-  { icon: Send,         label: "Direct contact",            desc: "Your preferred contact method for the designer to reach you immediately" },
-];
-
-const WHY_IT_WORKS = [
-  {
-    number: "01",
-    heading: "No more lost-in-translation moments",
-    body: "When you say \"something elegant for an evening wedding,\" Aria asks the right follow-up questions until your vision is unambiguous. Designers receive precision, not guesswork.",
-  },
-  {
-    number: "02",
-    heading: "You approve before the designer sees it",
-    body: "Nothing is sent until you read the complete brief, review your selected concept, and click confirm. You're in control at every stage.",
-  },
-  {
-    number: "03",
-    heading: "Designers quote confidently",
-    body: "A complete brief means a designer can give you an accurate quote on day one — no back-and-forth, no surprises mid-production.",
-  },
-];
-
 const TESTIMONIALS = [
   {
-    quote: "I told Aria I wanted something that felt like a midnight garden, and she turned that into the most precise brief I've ever seen. My designer knew exactly what to make.",
-    name: "Adaeze O.",
+    quote: "Drape completely transformed how I find and work with fashion designers. The AI brief builder saved me hours of back-and-forth.",
+    name: "Amara O.",
     role: "Client, Lagos",
     rating: 5,
   },
   {
-    quote: "As a designer, receiving a Drape brief is a completely different experience. I get the reference image, measurements, and a clear spec. I can quote and start on day one.",
-    name: "Kemi Fashola",
+    quote: "As a designer, Drape gives me everything I need to run my business — from client acquisition to production management.",
+    name: "Chidi E.",
     role: "Designer, Abuja",
     rating: 5,
   },
   {
-    quote: "I used to spend hours on WhatsApp trying to explain what I wanted. Now I just describe it to Aria and my designer receives a professional brief. Game changer.",
-    name: "Tunde A.",
-    role: "Client, Port Harcourt",
+    quote: "The quality of designers on Drape is exceptional. My wedding gown was beyond anything I could have imagined.",
+    name: "Yetunde A.",
+    role: "Client, Ibadan",
     rating: 5,
   },
 ];
 
-function StarRating({ n }: { n: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: n }).map((_, i) => (
-        <Star key={i} size={11} className="fill-primary text-primary" />
-      ))}
-    </div>
-  );
-}
+const STATS = [
+  { value: "80+", label: "Fashion Designers" },
+  { value: "550+", label: "Completed Projects" },
+  { value: "40+", label: "Cities in Nigeria" },
+  { value: "98%", label: "Satisfaction Rate" },
+];
 
 export default function HomePage() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* ── Hero ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-[0.035] pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "repeat",
-            backgroundSize: "128px 128px",
-          }}
-        />
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/5 blur-[130px]" />
-        </div>
+      {/* ── Hero Section ── */}
+      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-[96px] pointer-events-none" />
 
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto pt-20">
-          <div className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs tracking-[0.2em] uppercase">
-            <Sparkles size={11} className="animate-pulse" />
-            AI-Powered Fashion Communication
-          </div>
-
-          <h1 className="font-serif text-[clamp(2.8rem,8vw,5.5rem)] leading-[1.05] tracking-tight font-medium text-foreground mb-5">
-            Describe Your Dream Outfit.
-            <br />
-            <span className="text-primary italic">We Handle the Rest.</span>
-          </h1>
-
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
-            Chat with our AI style consultant. She turns your vision into a precise brief your designer can actually work from — with concepts, measurements, and no ambiguity.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/marketplace">
-              <Button
-                size="lg"
-                className="rounded-full px-8 h-12 font-medium tracking-wide shadow-[0_0_30px_rgba(201,168,76,0.25)] hover:shadow-[0_0_40px_rgba(201,168,76,0.35)] transition-shadow"
-              >
-                <Sparkles size={15} className="mr-2" />
-                Start Your Design Brief
-              </Button>
-            </Link>
-            {!user && (
-              <Link href="/signup?producer=true">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full px-8 h-12 border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
-                >
-                  Apply as a Designer
-                </Button>
-              </Link>
-            )}
-          </div>
-
-          {/* Animated workflow preview */}
-          <div className="mt-16 flex items-center justify-center gap-0 overflow-x-auto pb-2">
-            {["Describe", "Brief built", "Concepts", "Select", "Confirm", "Designer"].map((label, i) => (
-              <div key={i} className="flex items-center shrink-0">
-                <div className={`flex flex-col items-center gap-1.5 px-2 md:px-3`}>
-                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all
-                    ${i < 2 ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/4 border-white/10 text-white/30"}`}>
-                    {i + 1}
-                  </div>
-                  <span className={`text-[10px] uppercase tracking-wider whitespace-nowrap ${i < 2 ? "text-primary/70" : "text-white/20"}`}>
-                    {label}
-                  </span>
-                </div>
-                {i < 5 && (
-                  <div className="w-6 md:w-8 h-px bg-gradient-to-r from-primary/20 to-white/8 shrink-0" />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Social proof */}
-          <div className="mt-12 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-2xl font-serif text-foreground">200+</span>
-              <span className="uppercase tracking-widest text-[10px]">Designers</span>
+        <div className="max-w-app relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-sm text-primary mb-8 animate-fade-in-up">
+              <Sparkles className="h-3.5 w-3.5" />
+              AI-Powered Fashion Marketplace
             </div>
-            <div className="w-px h-8 bg-border" />
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-2xl font-serif text-foreground">40+</span>
-              <span className="uppercase tracking-widest text-[10px]">Cities</span>
-            </div>
-            <div className="w-px h-8 bg-border" />
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-2xl font-serif text-foreground">4.9★</span>
-              <span className="uppercase tracking-widest text-[10px]">Avg Rating</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground/40">
-          <div className="w-px h-10 bg-gradient-to-b from-transparent to-muted-foreground/40" />
-          <span className="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
-        </div>
-      </section>
+            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl text-foreground font-bold leading-[1.05] tracking-tight mb-6 animate-fade-in-up stagger-1">
+              Where Vision Meets
+              <span className="text-gradient block mt-1">Craftsmanship</span>
+            </h1>
 
-      {/* ── How it works ── */}
-      <section className="py-28 px-4 border-t border-border/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-3">The process</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">From Idea to Garment</h2>
-            <p className="mt-4 text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
-              Six steps that turn a vague vision into a brief your designer can actually work from.
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in-up stagger-2">
+              Nigeria's premier platform connecting you with exceptional fashion designers.
+              Describe your vision once — our AI handles the rest.
             </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={i} className="p-6 bg-card border border-card-border rounded-2xl hover:border-primary/20 transition-colors group">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <step.icon size={16} className="text-primary" />
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground tracking-widest">{step.step}</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up stagger-3">
+              {user ? (
+                <Link href="/marketplace">
+                  <Button size="lg" className="rounded-full h-12 px-8 text-sm gap-2">
+                    Browse Designers <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/signup">
+                    <Button size="lg" className="rounded-full h-12 px-8 text-sm gap-2">
+                      Get Started <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/marketplace">
+                    <Button variant="outline" size="lg" className="rounded-full h-12 px-8 text-sm">
+                      Browse Designers
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Social proof */}
+            <div className="mt-12 sm:mt-16 flex items-center justify-center gap-8 sm:gap-12 animate-fade-in-up stagger-4">
+              {STATS.map((s) => (
+                <div key={s.label} className="flex flex-col items-center gap-0.5">
+                  <span className="text-2xl sm:text-3xl font-serif text-foreground font-bold">{s.value}</span>
+                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{s.label}</span>
                 </div>
-                <h3 className="font-serif text-base text-foreground mb-2">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── What Designers Receive ── */}
-      <section className="py-28 px-4 bg-card/30 border-y border-border/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-3">The complete package</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">What Your Designer Receives</h2>
-            <p className="mt-4 text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
-              Not a vague description. A complete, structured brief — everything a designer needs to quote accurately and start immediately.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DESIGNER_RECEIVES.map((item, i) => (
-              <div key={i} className="flex gap-4 p-5 bg-card border border-card-border rounded-2xl hover:border-primary/20 transition-colors">
-                <div className="w-9 h-9 rounded-xl bg-primary/8 border border-primary/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <item.icon size={15} className="text-primary/80" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-1">{item.label}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Why This Works ── */}
-      <section className="py-28 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-3">The difference</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">Why This Changes Everything</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {WHY_IT_WORKS.map((item, i) => (
-              <div key={i} className="flex flex-col gap-4">
-                <span className="font-serif text-5xl text-primary/20">{item.number}</span>
-                <h3 className="font-serif text-xl text-foreground leading-snug">{item.heading}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section className="py-20 px-4 border-t border-border/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-3">Experiences</p>
-            <h2 className="font-serif text-2xl md:text-3xl text-foreground">Clients and Designers Agree</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="p-6 bg-card border border-card-border rounded-2xl flex flex-col gap-4">
-                <StarRating n={t.rating} />
-                <blockquote className="text-sm text-foreground/80 leading-relaxed italic flex-1">"{t.quote}"</blockquote>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Featured Designers ── */}
-      <section className="py-24 px-4 border-t border-border/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-12">
+      <section className="py-20 sm:py-28">
+        <div className="max-w-app">
+          <div className="flex items-end justify-between mb-10">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-primary mb-3">Curated for you</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Featured Designers</h2>
+              <h2 className="font-serif text-3xl sm:text-4xl text-foreground font-bold tracking-tight">Featured Designers</h2>
+              <p className="text-muted-foreground mt-2">Hand-picked talents ready to bring your vision to life</p>
             </div>
-            <Link
-              href="/marketplace"
-              className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-            >
-              View all
-              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            <Link href="/marketplace" className="hidden sm:flex items-center gap-1.5 text-sm text-primary hover:underline">
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURED.map((d) => (
               <DesignerCard key={d.id} designer={d} />
             ))}
           </div>
-
           <div className="mt-8 text-center sm:hidden">
             <Link href="/marketplace">
-              <Button variant="outline" className="rounded-full border-border/50">
-                View all designers
-                <ArrowRight size={14} className="ml-2" />
+              <Button variant="ghost" className="rounded-full text-sm gap-2">
+                View all designers <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Final CTA ── */}
-      <section className="py-24 px-4 border-t border-border/30">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="relative p-12 rounded-3xl border border-primary/10 bg-primary/5 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-primary/10 blur-[80px]" />
-            </div>
-            <div className="relative z-10">
-              <Sparkles className="mx-auto mb-5 text-primary w-8 h-8" />
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-4">
-                Ready to describe your perfect outfit?
+      {/* ── How It Works ── */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+        <div className="max-w-app">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-3xl sm:text-4xl text-foreground font-bold tracking-tight">
+              From idea to outfit, effortlessly
+            </h2>
+            <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+              Six simple steps. AI handles the complexity. You enjoy the experience.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-12">
+            {HOW_IT_WORKS.map((item) => (
+              <div key={item.step} className="relative group">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-sm font-mono text-muted-foreground">Step {item.step}</span>
+                </div>
+                <h3 className="font-serif text-lg font-semibold text-foreground mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI Section ── */}
+      <section className="py-20 sm:py-28">
+        <div className="max-w-app">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary mb-6">
+                <Zap className="h-3 w-3" /> AI-Powered
+              </div>
+              <h2 className="font-serif text-3xl sm:text-4xl text-foreground font-bold tracking-tight mb-4">
+                Meet Aria — Your AI Style Consultant
               </h2>
-              <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-                Join Drape. Describe your vision to Aria, choose a designer, and receive something made only for you.
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                No more endless emails or confusing briefs. Aria asks the right questions,
+                understands your style, and generates a complete fashion brief automatically.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link href={user ? "/marketplace" : "/signup"}>
-                  <Button
-                    size="lg"
-                    className="rounded-full px-8 h-12 font-medium shadow-[0_0_30px_rgba(201,168,76,0.3)]"
-                  >
-                    {user ? "Browse Designers" : "Create Your Account"}
-                    <ArrowRight size={16} className="ml-2" />
-                  </Button>
-                </Link>
-                {!user && (
+              <ul className="space-y-3">
+                {[
+                  "Natural conversation — just describe what you want",
+                  "AI extracts every detail into a structured brief",
+                  "Visual concepts generated from your description",
+                  "Seamlessly forward to your chosen designer",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm text-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="relative">
+              <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 border border-border p-8 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageCircle className="h-12 w-12 text-primary/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground text-sm italic">"I need a stunning ankara dress for a wedding in Lagos next month..."</p>
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs text-primary font-mono">Aria is listening...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+        <div className="max-w-app">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-3xl sm:text-4xl text-foreground font-bold tracking-tight">
+              Loved by designers and clients
+            </h2>
+            <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+              Hear from the Drape community
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="card-premium p-6">
+                <Quote className="h-6 w-6 text-primary/30 mb-4" />
+                <p className="text-sm text-foreground/80 leading-relaxed mb-6 italic">"{t.quote}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                  <div className="ml-auto flex">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-3 w-3 fill-primary text-primary" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA ── */}
+      <section className="py-20 sm:py-28">
+        <div className="max-w-app">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/5 border border-border p-12 sm:p-20 text-center">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[96px] pointer-events-none" />
+            <div className="relative z-10">
+              <h2 className="font-serif text-3xl sm:text-4xl text-foreground font-bold tracking-tight mb-4">
+                Ready to create something extraordinary?
+              </h2>
+              <p className="text-muted-foreground max-w-lg mx-auto mb-8">
+                Join Nigeria's fastest-growing fashion marketplace. Whether you're a designer or a client, Drape is where fashion happens.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                {user ? (
                   <Link href="/marketplace">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="rounded-full px-8 h-12 text-muted-foreground hover:text-foreground"
-                    >
-                      Browse first
+                    <Button size="lg" className="rounded-full h-12 px-8 gap-2">
+                      Start Exploring <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
+                ) : (
+                  <>
+                    <Link href="/signup">
+                      <Button size="lg" className="rounded-full h-12 px-8 gap-2">
+                        Get Started Free <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/marketplace">
+                      <Button variant="outline" size="lg" className="rounded-full h-12 px-8">
+                        Browse Marketplace
+                      </Button>
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
@@ -387,14 +321,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/30 py-10 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span className="font-serif text-lg text-primary">Drape</span>
-          <p>© {new Date().getFullYear()} Drape. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="/marketplace" className="hover:text-foreground transition-colors">Designers</Link>
-            <Link href="/signup?producer=true" className="hover:text-foreground transition-colors">For Designers</Link>
+      {/* ── Footer ── */}
+      <footer className="border-t border-border py-12">
+        <div className="max-w-app">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="col-span-2 md:col-span-1">
+              <span className="font-serif text-xl text-primary font-bold">Drape</span>
+              <p className="text-xs text-muted-foreground mt-2 max-w-xs">
+                Nigeria's premier AI-powered fashion marketplace connecting clients with exceptional designers.
+              </p>
+            </div>
+            {[
+              { title: "Platform", links: ["Marketplace", "How it Works", "AI Studio", "Pricing"] },
+              { title: "Company", links: ["About", "Blog", "Careers", "Contact"] },
+              { title: "Support", links: ["Help Center", "Terms of Service", "Privacy Policy", "FAQ"] },
+            ].map((col) => (
+              <div key={col.title}>
+                <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-3">{col.title}</h4>
+                <ul className="space-y-2">
+                  {col.links.map((l) => (
+                    <li key={l}><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{l}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">© 2026 Drape. All rights reserved.</p>
+            <div className="flex items-center gap-4 text-muted-foreground">
+              <Globe className="h-4 w-4" />
+              <span className="text-xs">Nigeria</span>
+            </div>
           </div>
         </div>
       </footer>
