@@ -1,47 +1,49 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// DRAPE DEMO DATA SEEDER
+// DRAPE COMPREHENSIVE DEMO DATA SEEDER
 // ═══════════════════════════════════════════════════════════════════════════
 // Run: npx tsx scripts/seed.ts
-// Demo users identified by @drape-demo.com email suffix.
-// To clear: DELETE FROM users WHERE email LIKE '%@drape-demo.com';
+// All demo users use @drape-demo.com emails.
+// To clear demo data: DELETE FROM users WHERE email LIKE '%@drape-demo.com';
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { db } from "@workspace/db";
 import {
-  usersTable, profilesTable, producerProfilesTable,
-  clientPreferencesTable, portfolioItemsTable,
-  reviewsTable, ordersTable, bookingsTable,
-  notificationsTable, inventoryItemsTable,
-  invoicesTable, expensesTable,
+  usersTable, producerProfilesTable, clientPreferencesTable,
+  portfolioItemsTable, reviewsTable, ordersTable, orderMessagesTable,
+  bookingsTable, notificationsTable, inventoryItemsTable,
+  invoicesTable, expensesTable, suppliersTable,
 } from "@workspace/db";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 
-// ─── Constants ────────────────────────────────────────────────────────────
-const CITIES = ["Lagos","Abuja","Port Harcourt","Enugu","Owerri","Onitsha","Awka","Benin City","Aba","Uyo","Calabar","Ibadan","Kano","Kaduna","Jos","Asaba","Warri","Makurdi","Ilorin","Yola"];
-const SPECIALTIES = ["Bridal","Luxury","Ready-to-Wear","Streetwear","Corporate Wear","Native Attire","Agbada","Senator Wear","Ankara Specialist","Aso-Ebi","Children's Clothing","Women's Fashion","Men's Fashion","Sportswear","Leather Crafts","Accessories","Bespoke Tailoring","Fashion Illustration","Embroidery","Fashion Consulting"];
-const REVIEW_COMMENTS = [
-  "Absolutely stunning work! The attention to detail was incredible. I received so many compliments at the event.",
-  "Professional from start to finish. Communication was clear and the delivery was on time.",
-  "Beautiful craftsmanship. The fabric selection was perfect and the fit was impeccable.",
-  "Highly recommended! This designer truly understands fashion and brings your vision to life.",
-  "Excellent service and outstanding quality. Will definitely be coming back for more pieces.",
-  "The fitting was perfect on the first try. Amazing tailoring skills!",
-  "Great experience working with this designer. Very responsive and accommodating to changes.",
-  "Loved the unique design. It's exactly what I wanted and more. Very talented!",
-  "Professional, punctual, and creative. The finished piece exceeded my expectations.",
-  "Wonderful custom piece. The embroidery work was exceptional. True artistry!",
-  "Good quality work but delivery was slightly delayed. The end result made up for it though.",
-  "Decent work for the price. Communication could have been better but the outfit came out nice.",
-  "Very creative designs. My wedding dress was absolutely perfect. Thank you!",
-  "The Ankara styling was phenomenal. Finally found someone who understands African prints!",
-  "Great consultation process. They really listened to what I wanted and delivered beautifully.",
-  "Exceptional craftsmanship. The beadwork and embroidery are world-class.",
-  "Fast turnaround without compromising quality. Thrilled with my custom agbada!",
-  "She understood my vision completely. The fitting was flawless.",
-  "Professional, talented, and delivers exactly what was promised every time.",
-  "Best tailor in Lagos! My entire wedding party used them and everyone was impressed.",
+// ─── DATA ─────────────────────────────────────────────────────────────────
+const CITIES = ["Lagos","Abuja","Ibadan","Port Harcourt","Benin City","Aba","Owerri","Enugu","Onitsha","Awka","Asaba","Warri","Uyo","Calabar","Jos","Kaduna","Kano","Ilorin","Makurdi","Yola","Maiduguri","Lokoja","Abeokuta","Akure","Osogbo","Ado Ekiti","Minna","Sokoto","Bauchi","Gombe","Damaturu","Birnin Kebbi"];
+const SPECIALTIES = ["Luxury Bridal","Wedding Couture","Bespoke Menswear","Native Wear","Agbada","Senator Wear","Ankara Specialist","Aso-Ebi","Ready-to-Wear","Streetwear","Luxury","Corporate Wear","Children's","Women's Fashion","Men's Fashion","Sportswear","Leather Goods","Accessories","Embroidery","Fashion Illustration","Uniform Production","Fashion Consultancy","Sustainable Fashion","Plus Size","Modest Fashion","Shoemaking"];
+const LANGUAGES = ["English","Hausa","Yoruba","Igbo","Pidgin","French","Arabic"];
+
+const REVIEWS = [
+  "Absolutely stunning work. The attention to detail was incredible and I received endless compliments.",
+  "Professional from start to finish. Communication was clear, fittings on time, delivery perfect.",
+  "Beautiful craftsmanship. The fabric selection was inspired and the fit was impeccable.",
+  "Highly recommended! This designer understands fashion and brought my vision to life perfectly.",
+  "Excellent service and outstanding quality. Already planning my next order.",
+  "The fitting was flawless on the first try. Remarkable tailoring skills.",
+  "Great experience. Very responsive and accommodating to every change I requested.",
+  "The unique design exceeded my expectations. Such a talented designer!",
+  "Professional, punctual, and extraordinarily creative. The finished piece was breathtaking.",
+  "Wonderful custom piece. The hand-beading was exceptional — true artistry.",
+  "Good quality work overall. Delivery was slightly delayed but the end result was worth the wait.",
+  "Decent work for the price. Communication could improve but the outfit came out beautiful.",
+  "My wedding dress was absolutely perfect. Every detail was exactly what I dreamed of.",
+  "Finally found someone who truly understands African prints. The Ankara work was phenomenal.",
+  "They listened carefully and delivered exactly what I wanted. The consultation process was thorough.",
+  "Exceptional craftsmanship on both the embroidery and beadwork. World-class quality.",
+  "Fast turnaround without any compromise on quality. Thrilled with my custom agbada.",
+  "She understood my style completely. Every fitting was perfect.",
+  "Professional, talented, dependable. Delivers exactly what's promised every single time.",
+  "Best tailor in Lagos. My entire wedding party used them and everyone was impressed.",
 ];
+
 const BUSINESS_NAMES = [
   "Maison Luxe","Silhouette Studio","Thread & Needle","Aso Elegance","Lagos Vogue House",
   "Royal Stitch","Kaftan Kings","Ankara Artistry","Bespoke by Chi","Aurelia Fashion House",
@@ -59,231 +61,312 @@ const BUSINESS_NAMES = [
   "Makurdi Moda","Jos Fashion Factory","Kano Creative Hub","Ilorin Textiles","Yola Styles",
   "Abeokuta Stitches","Ogbomoso Tailoring","Badagry Beach Wear","Ikorodu Fashion","Epe Embroidery",
   "Surulere Styles","Victoria Island Vogue","Lekki Luxury","Ikeja Fashion District","Ajah Atelier",
-];
-const DESIGNER_NAMES = [
-  "Amara Adebayo","Chidi Okonkwo","Ngozi Okafor","Emeka Balogun","Zainab Eze",
-  "Fatima Nwosu","Oluwaseun Ogunlade","Tunde Ugwu","Chioma Osei","Ifeanyi Diop",
-  "Adaeze Adegoke","Chukwudi Oyedele","Yetunde Nwachukwu","Segun Oyelade","Ebere Akintola",
-  "Kayode Oluwole","Folake Onyema","Musa Ibekwe","Nnenna Chibueze","Babatunde Odimayo",
-  "Simi Adeleke","Wale Ogunbiyi","Kemi Oshodi","Yusuf Bello","Hauwa Suleiman",
-  "Tobi Akinlade","Onyinye Okafor","Chisom Ugwu","Ejiro Okpara","Teniola Fashola",
-  "Femi Akinwale","Bola Ogun","Damilola Adeyemi","Tolulope Banjo","Abimbola Oyesanya",
-  "Kelechi Obi","Somto Okeke","Uche Nwankwo","Ijeoma Eze","Amaka Okafor",
-  "Oluchi Obi","Chidera Eze","Kosiso Okoro","Ebuka Ugwu","Nnamdi Okeke",
-  "Chibuzo Okafor","Zara Bello","Halima Adeleke","Amina Suleiman","Rashidat Ogun",
-  "Bisi Akinlade","Lola Oshodi","Sade Adeyemi","Temidayo Banjo","Ayomide Ogunbiyi",
-  "Feyikemi Adegoke","Mobolaji Oyedele","Opeyemi Nwachukwu","Boluwatife Oyelade","Titilayo Akintola",
-  "Funmilayo Oluwole","Modupe Onyema","Olayinka Ibekwe","Morenikeji Chibueze","Abosede Odimayo",
-  "Ezinne Adeleke","Chiamaka Ogunbiyi","Nneoma Oshodi","Chinenye Bello","Uzoma Suleiman",
-  "Obinna Akinlade","Chukwuma Ogun","Okechukwu Adeyemi","Ezeh Banjo","Okezie Oyesanya",
-];
-const CLIENT_NAMES = [
-  "Sarah Williams","Michael Johnson","Jennifer Brown","David Davis","Grace Wilson",
-  "Samuel Taylor","Esther Thomas","Daniel Jackson","Ruth White","Joseph Harris",
-  "Deborah Martin","Joshua Thompson","Mary Robinson","Andrew Clark","Cynthia Lewis",
-  "Peter Walker","Martha Hall","James Allen","Lydia Young","Thomas King",
-  "Peace Wright","John Hill","Faith Scott","George Green","Mercy Adams",
-  "Paul Baker","Joy Nelson","Philip Carter","Elizabeth Mitchell","Mark Roberts",
-  "Victoria Turner","Matthew Phillips","Blessing Campbell","Stephen Parker","Hannah Evans",
-  "Frank Edwards","Gloria Collins","Chris Stewart","Patience Morris","Charles Morrison",
+  "Magodo Design Studio","GRA Couture","Jakande Tailors","Anthony Village Fashion","Yaba Creative Hub",
+  "Bode Thomas Design","Mile 2 Tailoring","Oshodi Fabrics","Marina Luxury","VI Atelier",
+  "Ikota Design House","Lekki Phase 1 Studio","Chevron Fashion Lab","Ajah Creative Space","Sangotedo Atelier",
+  "Epe Embroidery House","Badagry Heritage Wear","Ikorodu Classic Cuts","Ikeja Elegance","Surulere Stitch Lab",
+  // Extra for 100 designers
+  "Ketu Fashion Hub","Agege Tailoring Co","Bariga Design Studio","Mushin Creative Workshop","Oworo Fashion Lab",
+  "Ebute Metta Stitches","Ilupéju Couture","Ojota Ready-to-Wear","Maryland Atelier","Gbagada Style House",
 ];
 
+const DESIGNER_FIRST = ["Amara","Chidi","Ngozi","Emeka","Zainab","Fatima","Oluwaseun","Tunde","Chioma","Ifeanyi","Adaeze","Chukwudi","Yetunde","Segun","Ebere","Kayode","Folake","Musa","Nnenna","Babatunde","Simi","Wale","Kemi","Yusuf","Hauwa","Tobi","Onyinye","Chisom","Ejiro","Teniola","Femi","Bola","Damilola","Tolulope","Abimbola","Kelechi","Somto","Uche","Ijeoma","Amaka","Oluchi","Chidera","Kosiso","Ebuka","Nnamdi","Chibuzo","Zara","Halima","Amina","Rashidat","Bisi","Lola","Sade","Temidayo","Ayomide","Feyikemi","Mobolaji","Opeyemi","Boluwatife","Titilayo","Funmilayo","Modupe","Olayinka","Yetunde","Morenikeji","Abosede","Ezinne","Chiamaka","Nneoma","Chinenye","Uzoma","Obinna","Chukwuma","Azubuike","Okechukwu","Ezeh","Obinna","Chidiebere","Somtochukwu","Onyeka","Chimamanda","Nwabueze","Okezie","Chibueze","Ugochukwu","Chinwe","Ifunanya","Onyinyechi","Chidimma","Chiamaka","Chinenyenwa","Uchenna","Ogochukwu","Nneka","Chioma","Chinyere","Adanna","Chisara","Chidalu","Chiamara","Chidera","Chimdiebere","Chinaza"];
+const DESIGNER_LAST = ["Adebayo","Okonkwo","Okafor","Balogun","Eze","Nwosu","Ogunlade","Ugwu","Osei","Diop","Adegoke","Oyedele","Nwachukwu","Oyelade","Akintola","Oluwole","Onyema","Ibekwe","Chibueze","Odimayo","Fashola","Akinwale","Ogunbiyi","Oshodi","Bello","Suleiman","Akinlade","Banjo","Oyesanya","Obi","Okeke","Nwankwo","Eze","Okafor","Ugwu","Okoro","Ugwu","Okeke","Okafor","Bello","Adeleke","Suleiman","Ogun","Akinlade","Oshodi","Adeyemi","Banjo","Ogunbiyi","Adegoke","Oyedele","Nwachukwu","Oyelade","Akintola","Oluwole","Onyema","Ibekwe","Chibueze","Odimayo","Adebayo","Okonkwo","Okafor","Balogun","Eze","Nwosu","Ogunlade","Ugwu","Osei","Diop","Adegoke","Oyedele","Nwachukwu","Oyelade","Akintola","Oluwole","Onyema","Ibekwe","Chibueze","Odimayo","Fashola","Akinwale","Ogunbiyi","Oshodi","Bello","Suleiman","Akinlade","Banjo","Oyesanya","Obi","Okeke","Nwankwo"];
+
+const CLIENT_FIRST = ["Sarah","Michael","Jennifer","David","Grace","Samuel","Esther","Daniel","Ruth","Joseph","Deborah","Joshua","Mary","Andrew","Cynthia","Peter","Martha","James","Lydia","Thomas","Peace","John","Faith","George","Mercy","Paul","Joy","Philip","Elizabeth","Mark","Victoria","Matthew","Blessing","Stephen","Hannah","Frank","Gloria","Chris","Patience","Charles","Ngozi","Funke","Bolanle","Chinyere","Amara","Ezinne","Adaeze","Nnenna","Ijeoma","Yetunde","Kemi","Simi","Folake","Zainab","Halima","Amina","Bisi","Lola","Sade","Titilayo"];
+const CLIENT_LAST = ["Williams","Johnson","Brown","Davis","Wilson","Taylor","Thomas","Jackson","White","Harris","Martin","Thompson","Robinson","Clark","Lewis","Walker","Hall","Allen","Young","King","Wright","Hill","Scott","Green","Adams","Baker","Nelson","Carter","Mitchell","Roberts","Turner","Phillips","Campbell","Parker","Evans","Edwards","Collins","Stewart","Morris","Morrison","Okafor","Eze","Nwosu","Ugwu","Okonkwo","Balogun","Adebayo","Adegoke","Ogunbiyi","Fashola","Akinlade","Oshodi","Bello","Suleiman","Akinwola","Diop","Osei","Oyelade","Oluwole","Nwachukwu"];
+
+const SUPPLIER_NAMES = ["Lagos Textile Market","Abuja Fabrics Co.","Online Tailoring Supplies","Kano Leather Goods","Enugu Craft Centre","Port Harcourt Fashion Mart","Ibadan Textiles","Aba Fabric Wholesalers","Onitsha Thread Distributors","Kaduna Button Manufacturers","Jos Accessories Ltd","Calabar Lace House","Benin City Silk Traders","Warri Cotton Suppliers","Minna Packaging Co.","Makurdi Labels Ltd","Yola Equipment Rentals","Sokoto Tailoring Supplies","Bauchi Fabric Warehouse","Gombe Creative Materials","Osogbo Embroidery Threads","Ado Ekiti Crafts","Akure Leather Works","Lokoja Sewing Machines","Damaturu Buttons & Zippers"];
+
+const FABRIC_NAMES = ["Swiss Lace","Guipure Lace","French Lace","Chiffon","Satin","Silk","Cotton Voile","Ankara Print","Aso Oke","Brocade","Organza","Tulle","Velvet","Crepe","Georgette","Linen","Sequin Mesh","Beaded Tulle","Damask","Jacquard","Mikado Silk","Shantung Silk","Charmeuse","Lace Netting","African Wax Print","Tie Dye","Adire","Kente","Bark Cloth","Cashmere","Wool Blend","Rayon","Polyester Blend","Spandex Mix"];
+
+const MESSAGE_TEMPLATES = [
+  ["Good morning! I'd like to discuss my bridal gown order.", "Good morning! Thank you for reaching out. I'd be happy to discuss your bridal gown. What's your vision?", "I'm getting married in June and I need something elegant and timeless. I love lace details and a classic silhouette.", "That sounds beautiful! I specialize in bridal wear. Would you like to schedule a consultation so we can discuss fabrics and measurements?"],
+  ["Hello! I was wondering about pricing for a custom agbada.", "Great question! My custom agbada pieces start from ₦85,000 depending on fabric and embroidery complexity.", "That sounds reasonable. I'd like to come in for a measurement appointment.", "Perfect. I'll send you my available time slots for this week."],
+  ["Hi, I need a corporate uniform for my team of 12 people.", "Hello! I'd be delighted to help with your corporate uniforms. I can offer a bulk discount for 12 pieces.", "That would be wonderful. Can you share some fabric samples?", "Absolutely. I'll prepare a selection of professional fabrics and visit your office later this week."],
+  ["The fitting was perfect! Thank you so much.", "You're welcome! It was a pleasure working with you. The final adjustments will be ready by Friday.", "Excellent. I can't wait to wear it to the event!", "I'm sure you'll look stunning. I'll send a confirmation once it's ready for pickup."],
+  ["I'd like to make some changes to the design.", "Of course! What changes did you have in mind?", "I'd like the sleeves to be longer and the neckline to be a bit higher.", "Absolutely, I can make those adjustments. Let me update the design and send you a revised sketch."],
+  ["When can I come for my next fitting?", "Your next fitting is scheduled for Thursday at 2 PM. Does that still work for you?", "Yes, that's perfect. See you then!", "Great, see you Thursday! Please bring your shoes so we can finalize the hem length."],
+  ["The Ankara dress you made for me is absolutely stunning!", "Thank you so much! It was a joy to work with such beautiful fabric. You chose well!", "Everyone at the wedding complimented it. I'll definitely be ordering again.", "I look forward to working with you again! Feel free to share any inspiration for your next piece."],
+  ["I need a rush order for a senator wear. Can you deliver in 5 days?", "That's a tight timeline but I can make it work with a rush fee. Let's discuss the design today.", "Perfect. I'll come by this evening.", "See you then. I'll prepare some fabric options beforehand."],
+  ["Payment has been made. Please confirm receipt.", "Payment confirmed! Thank you. I'll proceed with cutting the fabric today.", "Great, keep me updated on the progress.", "Will do. I'll send you photos at each stage so you can track the progress."],
+  ["The finished pieces are beautiful! My whole family loves them.", "That makes me so happy! Thank you for trusting me with your Aso-Ebi collection.", "You're now our family tailor! We'll be back for every occasion.", "It would be my honour! Thank you for the wonderful review."],
+];
+
+const TESTIMONIALS = [
+  { q: "Drape is a game-changer for finding talented fashion designers in Nigeria. The platform is beautiful and easy to use.", n: "Amara O.", r: "Client, Lagos" },
+  { q: "As a designer, Drape has transformed how I manage my business. From client acquisition to production tracking — everything in one place.", n: "Chidi E.", r: "Designer, Abuja" },
+  { q: "My wedding gown was beyond anything I could have imagined. The AI brief feature made explaining my vision so easy.", n: "Yetunde A.", r: "Bride, Ibadan" },
+  { q: "The quality of designers on this platform is exceptional. I've ordered three times and each experience was perfect.", n: "Tunde B.", r: "Client, Lagos" },
+  { q: "Drape made finding a reliable tailor so simple. The search filters helped me find exactly what I needed.", n: "Fatima K.", r: "Client, Kano" },
+  { q: "I run a fashion house and Drape has become our primary platform for client acquisition. Invaluable tool.", n: "Segun A.", r: "Designer, Port Harcourt" },
+  { q: "The booking system is brilliant. I scheduled my consultation in under a minute.", n: "Ngozi M.", r: "Client, Enugu" },
+  { q: "My bridesmaids' dresses were flawless. Every fit was perfect with no alterations needed.", n: "Chioma E.", r: "Bride, Owerri" },
+  { q: "Drape makes Nigerian fashion accessible to everyone. The platform design is world-class.", n: "Emeka O.", r: "Fashion Enthusiast, Abuja" },
+  { q: "From consultation to delivery, the entire process was seamless. Highly recommend Drape.", n: "Zainab A.", r: "Client, Jos" },
+  { q: "The inventory management tools have saved me countless hours. I can track all my fabrics digitally.", n: "Amara C.", r: "Designer, Lagos" },
+  { q: "Corporate uniform ordering used to be such a headache. Drape made it effortless.", n: "Funke O.", r: "HR Manager, Lagos" },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 function rand(min: number, max: number) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function slug(name: string) { return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function chunk<T>(arr: T[], size: number): T[][] { const r: T[][] = []; for (let i = 0; i < arr.length; i += size) r.push(arr.slice(i, i + size)); return r; }
 
 async function main() {
   const hash = await bcrypt.hash("Demo@123", 12);
   const designerIds: string[] = [];
   const clientIds: string[] = [];
+  const orderIds: string[] = [];
 
-  console.log("🌱 Seeding Drape with demo data...\n");
+  console.log("🌱 Seeding Drape — Comprehensive Demo Data\n");
 
-  // ── 80 Designers ─────────────────────────────────────────────────
-  console.log("  Creating 80 designers...");
-  for (let i = 0; i < 80; i++) {
-    const name = DESIGNER_NAMES[i];
+  // ── 100 Designers ────────────────────────────────────────────────
+  console.log(`  Creating 100 designers...`);
+  for (let i = 0; i < 100; i++) {
+    const name = `${DESIGNER_FIRST[i]} ${DESIGNER_LAST[i]}`;
     const email = `designer${i+1}@drape-demo.com`;
-    const id = randomUUID();
-    designerIds.push(id);
+    const id = randomUUID(); designerIds.push(id);
     const bizName = BUSINESS_NAMES[i];
     const city = pick(CITIES);
-    const exp = rand(2, 25);
-    const numspec = rand(1, 4);
+    const exp = rand(2, 30);
+    const numSpec = rand(1, 4);
     const specs: string[] = [];
-    while (specs.length < numspec) { const s = pick(SPECIALTIES); if (!specs.includes(s)) specs.push(s); }
+    while (specs.length < numSpec) { const s = pick(SPECIALTIES); if (!specs.includes(s)) specs.push(s); }
 
     await db.insert(usersTable).values({
-      id, email, name, role: "DESIGNER", passwordHash: hash,
-      onboardingComplete: true,
+      id, email, name, role: "DESIGNER", passwordHash: hash, onboardingComplete: true,
     });
     await db.insert(producerProfilesTable).values({
-      userId: id,
-      brandName: bizName, professionalName: name.split(" ")[0],
-      bio: `${specs.slice(0,2).join(" and ")} specialist with ${exp}+ years of experience. ${pick([
-        "Every piece tells a unique story, crafted with passion and precision.",
-        "Trained in both traditional Nigerian techniques and contemporary global fashion.",
-        "Dedicated to creating garments that celebrate African heritage with modern sophistication.",
-        "Known for exceptional craftsmanship and an unwavering commitment to quality.",
-      ])}`,
+      userId: id, brandName: bizName, professionalName: name.split(" ")[0],
+      bio: [
+        `Award-winning ${specs.slice(0,2).join(" and ")} specialist with ${exp}+ years of experience. ${pick(["Every piece tells a unique story, crafted with passion.", "Known for exceptional craftsmanship and an uncompromising commitment to quality.", "Blending traditional Nigerian techniques with contemporary global fashion aesthetics."])}`,
+        `Creative director and lead designer at ${bizName}. ${pick(["Specializing in custom pieces that celebrate individuality.", "Dedicated to sustainable, ethical fashion practices.", "Passionate about elevating African fashion on the global stage."])}`,
+        `With ${exp} years mastering the art of ${specs[0]}, ${bizName} has become synonymous with ${pick(["luxury", "elegance", "innovation", "craftsmanship", "excellence"])}. ${pick(["Every stitch tells a story.", "Your vision, my expertise.", "Fashion is personal. I make it perfect."])}`,
+      ][rand(0,2)],
       location: city, specialization: specs[0],
       specialties: specs, studioName: bizName,
       studioType: pick(["SOLO","STUDIO","ATELIER","BRAND"]) as any,
       experience: exp,
+      portfolioDescription: `Explore the portfolio of ${bizName} — ${exp} years of excellence in ${specs.slice(0,3).join(", ")}.`,
       portfolioUrls: [] as string[],
-      priceMin: rand(15000, 50000), priceMax: rand(80000, 500000),
-      website: `https://${slug(bizName)}.example.com`,
-      instagram: slug(bizName),
+      priceMin: rand(15000, 80000), priceMax: rand(100000, 800000),
+      website: `https://${slug(bizName)}.drape.com`, instagram: slug(bizName).slice(0,30),
       availability: pick(["available","busy","limited"]) as any,
     });
   }
 
-  // ── 40 Clients ────────────────────────────────────────────────────
-  console.log("  Creating 40 clients...");
-  for (let i = 0; i < 40; i++) {
-    const name = CLIENT_NAMES[i];
+  // ── 60 Clients ───────────────────────────────────────────────────
+  console.log(`  Creating 60 clients...`);
+  for (let i = 0; i < 60; i++) {
+    const name = `${CLIENT_FIRST[i]} ${CLIENT_LAST[i]}`;
     const email = `client${i+1}@drape-demo.com`;
-    const id = randomUUID();
-    clientIds.push(id);
+    const id = randomUUID(); clientIds.push(id);
     await db.insert(usersTable).values({
-      id, email, name, role: "CLIENT", passwordHash: hash,
-      onboardingComplete: true,
+      id, email, name, role: "CLIENT", passwordHash: hash, onboardingComplete: true,
     });
     await db.insert(clientPreferencesTable).values({
       userId: id,
-      stylePreferences: [pick(["Modern","Classic","Traditional","Minimalist","Avant-garde","Bohemian","Romantic","Edgy"]), pick(["Ankara prints","Lace","Plain fabrics","Mixed patterns","Sustainable materials"])],
-      preferredColours: [pick(["Bold colours","Pastels","Neutrals","Jewel tones","Earth tones"])],
-      budgetMin: rand(20000, 100000), budgetMax: rand(150000, 1000000),
+      stylePreferences: [pick(["Modern","Classic","Traditional","Minimalist","Avant-garde","Bohemian","Romantic","Edgy","Preppy","Glamorous"]), pick(["Ankara prints","Lace","Plain fabrics","Mixed patterns","Sustainable materials","Premium textiles"])],
+      preferredColours: [pick(["Bold colours","Pastels","Neutrals","Jewel tones","Earth tones","Monochrome","Brights"])],
+      budgetMin: rand(20000, 150000), budgetMax: rand(150000, 1500000),
     });
   }
 
-  // ── 550 Orders ────────────────────────────────────────────────────
-  console.log("  Creating 550 orders/projects...");
-  for (let i = 0; i < 550; i++) {
-    const status = i < 300 ? pick(["COMPLETED","DELIVERED"]) : i < 450 ? pick(["ENQUIRY","ACCEPTED","DEPOSIT_PAID","IN_PRODUCTION","FITTING"]) : "ENQUIRY";
+  // ── 10 Admins ─────────────────────────────────────────────────────
+  console.log(`  Creating 10 admins...`);
+  const adminNames = ["Chioma Admin","Segun Admin","Fatima Admin","Emeka Admin","Ngozi Admin","Tunde Admin","Amara Admin","Kayode Admin","Zainab Admin","Chidi Admin"];
+  for (let i = 0; i < 10; i++) {
+    await db.insert(usersTable).values({
+      id: `a0000000-0000-0000-0000-${String(i+1).padStart(12,"0")}`,
+      email: `admin${i+1}@drape-demo.com`, name: adminNames[i],
+      role: "ADMIN", passwordHash: hash, onboardingComplete: true,
+    });
+  }
+
+  // ── 900 Orders / Projects ────────────────────────────────────────
+  console.log(`  Creating 900 orders/projects...`);
+  for (let i = 0; i < 900; i++) {
+    const status = i < 500 ? pick(["COMPLETED","DELIVERED","COMPLETED","COMPLETED","DELIVERED"]) : i < 750 ? pick(["ENQUIRY","ACCEPTED","DEPOSIT_PAID","IN_PRODUCTION","FITTING","FINAL_PAYMENT"]) : "ENQUIRY";
+    const oid = randomUUID(); orderIds.push(oid);
     await db.insert(ordersTable).values({
-      clientId: pick(clientIds), producerId: pick(designerIds),
+      id: oid, clientId: pick(clientIds), producerId: pick(designerIds),
       status: status as any,
-      title: pick([`${pick(["Bridal","Evening","Corporate","Casual","Traditional","Wedding"])} ${pick(["Gown","Suit","Dress","Outfit","Ensemble","Agbada","Kaftan","Blazer"])}`]),
-      description: pick(["Custom made for a special occasion","Professional corporate wardrobe","Traditional wedding attire","Casual everyday luxury wear","Bespoke evening wear collection"]),
-      agreedPrice: rand(30000, 500000), currency: "NGN",
-      depositPaid: Math.random() > 0.3, estimatedDays: rand(5, 30),
+      title: pick([`${pick(["Bridal","Evening","Corporate","Casual","Traditional","Wedding","Summer","Festive","Cocktail","Gala"])} ${pick(["Gown","Suit","Dress","Outfit","Ensemble","Agbada","Kaftan","Blazer","Two-Piece","Jumpsuit"])}`]),
+      description: pick(["Custom made for a special occasion","Professional corporate wardrobe","Traditional wedding attire","Casual everyday luxury wear","Bespoke evening wear collection","Festive celebration outfit","Gala event ensemble"]),
+      agreedPrice: rand(30000, 800000), currency: "NGN",
+      depositPaid: Math.random() > 0.25, estimatedDays: rand(3, 45),
     });
   }
 
-  // ── 620 Reviews ───────────────────────────────────────────────────
-  console.log("  Creating 620 reviews...");
-  for (let i = 0; i < 620; i++) {
-    const rating = Math.random() < 0.7 ? rand(4,5) : Math.random() < 0.9 ? 3 : rand(1,2);
+  // ── 1200 Reviews ─────────────────────────────────────────────────
+  console.log(`  Creating 1,200 reviews...`);
+  for (let i = 0; i < 1200; i++) {
+    const r = Math.random();
+    const rating = r < 0.78 ? rand(4,5) : r < 0.93 ? 3 : r < 0.99 ? 2 : 1;
     await db.insert(reviewsTable).values({
-      orderId: randomUUID(), clientId: pick(clientIds),
-      designerId: pick(designerIds), rating, status: "APPROVED",
-      title: pick(["Absolutely beautiful!","Highly recommended","Exceeded expectations","Great craftsmanship","Love my outfit!","Professional service","Stunning work","Perfect fit","Will order again","Exceptional quality"]),
-      comment: pick(REVIEW_COMMENTS),
-      imageUrls: [] as string[], helpfulCount: rand(0, 12),
+      orderId: randomUUID(), clientId: pick(clientIds), designerId: pick(designerIds),
+      rating, status: "APPROVED",
+      title: pick(["Absolutely beautiful!","Highly recommended","Exceeded expectations","Great craftsmanship","Love my outfit!","Professional service","Stunning work","Perfect fit","Will order again","Exceptional quality","World class","Divine creation","Masterpiece","Pure elegance"]),
+      comment: pick(REVIEWS),
+      imageUrls: [] as string[], helpfulCount: rand(0, 15),
     });
   }
 
-  // ── 200 Bookings ──────────────────────────────────────────────────
-  console.log("  Creating 200 bookings...");
-  for (let i = 0; i < 200; i++) {
+  // ── 2000+ Chat Messages ──────────────────────────────────────────
+  console.log(`  Creating 2,000 chat messages...`);
+  let msgIdx = 0;
+  for (let m = 0; m < 150 && msgIdx < 2000; m++) {
+    const conv = pick(MESSAGE_TEMPLATES);
+    const orderId = pick(orderIds);
+    for (const content of conv) {
+      if (msgIdx >= 2000) break;
+      await db.insert(orderMessagesTable).values({
+        orderId, content,
+        role: msgIdx % 2 === 0 ? "client" : "designer",
+        createdAt: new Date(Date.now() - rand(1, 90) * 86400000),
+      });
+      msgIdx++;
+    }
+  }
+  // Fill remaining with random messages
+  while (msgIdx < 2000) {
+    const orderId = pick(orderIds);
+    await db.insert(orderMessagesTable).values({
+      orderId, content: pick(REVIEWS),
+      role: pick(["client","designer"]),
+      createdAt: new Date(Date.now() - rand(1, 90) * 86400000),
+    });
+    msgIdx++;
+  }
+
+  // ── 300 Bookings ─────────────────────────────────────────────────
+  console.log(`  Creating 300 bookings...`);
+  for (let i = 0; i < 300; i++) {
     const start = new Date();
-    start.setDate(start.getDate() + rand(-60, 90));
+    start.setDate(start.getDate() + rand(-90, 120));
     const end = new Date(start); end.setHours(end.getHours() + rand(1, 3));
     await db.insert(bookingsTable).values({
       clientId: pick(clientIds), designerId: pick(designerIds),
       type: pick(["CONSULTATION","MEASUREMENTS","FITTING","STUDIO_VISIT","VIRTUAL_MEETING"]) as any,
-      status: start < new Date() ? pick(["COMPLETED","CANCELLED","NO_SHOW"]) as any : pick(["PENDING","CONFIRMED"]) as any,
-      title: pick(["Fitting session","Design consultation","Measurement appointment","Fabric selection","Final fitting","Style consultation"]),
+      status: start < new Date() ? pick(["COMPLETED","CANCELLED","NO_SHOW","COMPLETED","COMPLETED"]) as any : pick(["PENDING","CONFIRMED","CONFIRMED"]) as any,
+      title: pick(["Fitting session","Design consultation","Measurement appointment","Fabric selection","Final fitting","Style consultation","Progress review"]),
       startTime: start, endTime: end, timezone: "Africa/Lagos",
-      isVirtual: Math.random() > 0.5,
+      isVirtual: Math.random() > 0.6,
     });
   }
 
-  // ── 300 Notifications ─────────────────────────────────────────────
-  console.log("  Creating 300 notifications...");
-  const notifTypes = ["ORDER_UPDATE","MESSAGE","BRIEF_READY","REVIEW_REQUEST","GENERAL","NEW_ORDER","ORDER_ACCEPTED","STATUS_UPDATED"] as const;
-  for (let i = 0; i < 300; i++) {
+  // ── 400 Notifications ─────────────────────────────────────────────
+  console.log(`  Creating 400 notifications...`);
+  const notifTypes = ["ORDER_UPDATE","MESSAGE","BRIEF_READY","REVIEW_REQUEST","GENERAL","NEW_ORDER","ORDER_ACCEPTED","STATUS_UPDATED","MEASUREMENTS_SUBMITTED","PRODUCTION_GUIDE_READY","REVIEW_RECEIVED"] as const;
+  const notifTitles = ["Project approved!","New message received","Booking confirmed","Payment received","Portfolio liked","Review received","Order status updated","New consultation request","Fitting reminder","Measurement ready"];
+  for (let i = 0; i < 400; i++) {
     await db.insert(notificationsTable).values({
-      userId: pick([...clientIds, ...designerIds]),
+      userId: pick([...clientIds, ...designerIds.filter(() => Math.random() > 0.3)]),
       type: pick(notifTypes),
-      title: pick(["Project approved!","New message received","Booking confirmed","Payment received","Portfolio liked","Review received","Order status updated","New consultation request"]),
-      body: `Your ${pick(["bridal gown","suit","agbada","evening dress","ankara outfit"])} is ${pick(["ready for fitting","in production","being designed","approved","completed"])}.`,
-      read: Math.random() > 0.4,
+      title: pick(notifTitles),
+      body: pick([`Your order is ${pick(["ready for fitting","in production","being designed","approved","completed"])}.`,`${pick(["Amara","Chidi","Fatima","Tunde","Chioma"])} sent you a message.`,`Your booking has been ${pick(["confirmed","rescheduled","cancelled"])}.`]),
+      read: Math.random() > 0.35,
     });
   }
 
-  // ── 800+ Portfolio Items ──────────────────────────────────────────
-  console.log("  Creating 800+ portfolio items...");
+  // ── 1500+ Portfolio Items ────────────────────────────────────────
+  console.log(`  Creating 1,500+ portfolio items...`);
   for (const did of designerIds) {
-    const count = rand(6, 15);
+    const count = rand(8, 20);
     for (let j = 0; j < count; j++) {
       await db.insert(portfolioItemsTable).values({
         designerId: did,
-        title: pick(["Elegant Evening Gown","Modern Agbada","Bridal Masterpiece","Corporate Blazer","Ankara Fusion Dress","Traditional Wedding Set","Casual Luxury Wear","Statement Piece","Summer Collection","Couture Evening Wear"]),
-        description: pick(["Handcrafted with premium fabric. Features intricate embroidery and beadwork.","Modern take on traditional Nigerian fashion. Clean lines, bold patterns.","Bespoke piece made for a discerning client. Premium finish throughout."]),
-        category: pick(SPECIALTIES), tags: [pick(["luxury","traditional","modern","handmade","premium","bespoke","custom","unique"])],
+        title: pick(["Elegant Evening Gown","Modern Agbada","Bridal Masterpiece","Corporate Blazer","Ankara Fusion Dress","Traditional Wedding Set","Casual Luxury","Statement Piece","Summer Collection","Couture Evening Wear","Kaftan Elegance","Aso-Ebi Special","Senator Classic","Lace Luxury Dress","Streetwear Collection","Executive Suit Set","Bohemian Maxi Dress","Heritage Ensemble","Runway Collection","Festive Glamour"]),
+        description: pick(["Handcrafted with premium fabric. Features intricate embroidery and beadwork.","Modern take on traditional Nigerian fashion. Clean lines, bold patterns.","Bespoke piece made for a discerning client. Premium finish throughout.","Inspired by Nigerian heritage with a contemporary twist."]),
+        category: pick(SPECIALTIES), tags: [pick(["luxury","traditional","modern","handmade","premium","bespoke","custom","unique","elegant","vibrant"])],
         imageUrls: [] as string[],
       });
     }
   }
 
-  // ── 200 Invoices ──────────────────────────────────────────────────
-  console.log("  Creating 200 invoices...");
-  for (let i = 0; i < 200; i++) {
-    const total = rand(50000, 500000);
-    const status = pick(["PAID","PAID","PAID","DRAFT","SENT","OVERDUE","CANCELLED"]);
+  // ── Suppliers ──────────────────────────────────────────────────────
+  console.log(`  Creating 25 suppliers...`);
+  for (let i = 0; i < 25; i++) {
+    const city = pick(CITIES);
+    await db.insert(suppliersTable).values({
+      userId: pick(designerIds), name: SUPPLIER_NAMES[i],
+      contactName: `${pick(DESIGNER_FIRST)} ${pick(DESIGNER_LAST)}`,
+      email: `${slug(SUPPLIER_NAMES[i])}@drape-supplier.com`,
+      phone: `+234${rand(700, 909)}${String(rand(100, 9999)).padStart(4,"0")}${String(rand(100, 9999)).padStart(4,"0")}`,
+      address: `${rand(1, 100)} ${pick(["Fabric Avenue","Tailor Street","Market Road","Textile Lane","Fashion Drive","Creative Boulevard"])}, ${city}`,
+      productsSupplied: [pick(FABRIC_NAMES), pick(FABRIC_NAMES), pick(SPECIALTIES)].slice(0, rand(1,3)),
+      leadTimeDays: rand(2, 21), rating: rand(3, 5),
+      notes: pick(["Reliable supplier, consistent quality","Premium products, fast delivery","Good wholesale prices","Quality can vary, inspect before purchase","Excellent customer service"]),
+      totalPurchases: rand(1, 20), outstandingAmount: rand(0, 200000),
+    });
+  }
+
+  // ── 300 Invoices ──────────────────────────────────────────────────
+  console.log(`  Creating 300 invoices...`);
+  for (let i = 0; i < 300; i++) {
+    const total = rand(50000, 600000);
+    const status = pick(["PAID","PAID","PAID","DRAFT","SENT","OVERDUE","PAID","CANCELLED","PAID","PAID"]);
     await db.insert(invoicesTable).values({
       userId: pick(designerIds), clientId: pick(clientIds),
       invoiceNumber: `DEMO-INV-${String(i+1).padStart(5, "0")}`,
       status: status as any,
-      items: [{ description: pick(["Design consultation fee","Bespoke tailoring service","Fabric sourcing & pattern making","Rush delivery fee","Fitting session & alterations"]), quantity: rand(1, 5), unitPrice: rand(10000, 100000), totalPrice: total }],
+      items: [{ description: pick(["Design consultation fee","Bespoke tailoring service","Fabric sourcing & pattern making","Rush delivery fee","Fitting session & alterations","Complete outfit package"]), quantity: rand(1, 5), unitPrice: rand(15000, 150000), totalPrice: total }],
       subtotal: total, taxRate: "7.5", taxAmount: Math.round(total * 0.075),
       discount: Math.random() > 0.7 ? rand(5000, 50000) : 0,
-      total: Math.round(total * 1.075),
-      amountPaid: status === "PAID" ? total : 0,
-      balanceDue: status === "PAID" ? 0 : total,
-      currency: "NGN", clientName: pick(CLIENT_NAMES),
+      total: Math.round(total * 1.075), amountPaid: status === "PAID" ? total : 0,
+      balanceDue: status === "PAID" ? 0 : total, currency: "NGN",
+      clientName: pick(CLIENT_FIRST) + " " + pick(CLIENT_LAST),
     });
   }
 
-  // ── 400 Expenses ──────────────────────────────────────────────────
-  console.log("  Creating 400 expenses...");
-  const expenseCats = ["FABRIC","TRANSPORT","LABOUR","UTILITIES","EQUIPMENT","MARKETING","RENT","SUPPLIES","SOFTWARE","INSURANCE","TAX","OTHER"] as const;
-  for (let i = 0; i < 400; i++) {
+  // ── 500 Expenses ──────────────────────────────────────────────────
+  console.log(`  Creating 500 expenses...`);
+  const expCats = ["FABRIC","TRANSPORT","LABOUR","UTILITIES","EQUIPMENT","MARKETING","RENT","SUPPLIES","SOFTWARE","INSURANCE","TAX","OTHER"] as const;
+  for (let i = 0; i < 500; i++) {
     await db.insert(expensesTable).values({
       userId: pick(designerIds),
-      description: pick([`Purchased ${pick(["lace","ankara","silk","cotton","organza","tulle","velvet"])} fabric from local market`,`${pick(["Tailor","Seamstress","Assistant","Delivery"])} ${pick(["wages","overtime","allowance"])}`,`${pick(["Electricity","Water","Internet","Rent"])} — monthly`,`${pick(["Sewing machine","Mannequin","Iron","Cutting table"])} ${pick(["repair","purchase"])}`,`${pick(["Instagram","Google","Facebook"])} advertising campaign`]),
-      category: pick(expenseCats), amount: rand(2000, 200000), currency: "NGN",
+      description: pick([
+        `Purchased ${pick(FABRIC_NAMES)} from ${pick(["Lagos Market","Abuja Textiles","Online Supplier","Kano Merchants","Enugu Craft Centre"])}`,
+        `${pick(["Tailor","Seamstress","Assistant","Delivery driver"])} ${pick(["wages","overtime","transport allowance","bonus"])}`,
+        `${pick(["Electricity","Water","Internet","Rent"])} ${pick(["monthly","quarterly","bi-annual"])}`,
+        `${pick(["Sewing machine","Mannequin","Industrial Iron","Cutting table","Thread bundle"])} ${pick(["repair","replacement","upgrade","purchase"])}`,
+        `${pick(["Instagram","Google","Facebook","Print","Radio"])} advertising ${pick(["campaign","boost","materials","slot"])}`,
+      ]),
+      category: pick(expCats), amount: rand(2000, 300000), currency: "NGN",
       taxDeductible: Math.random() > 0.3 ? "true" : "false",
-      vendor: pick(["Lagos Textile Market","Abuja Fabrics Co.","Online Tailoring Supplies","Kano Leather Goods","Enugu Craft Centre","Port Harcourt Fashion Mart"]),
+      vendor: pick(SUPPLIER_NAMES),
     });
   }
 
-  // ── 200+ Inventory Items ──────────────────────────────────────────
-  console.log("  Creating 200 inventory items...");
+  // ── 300 Inventory Items ───────────────────────────────────────────
+  console.log(`  Creating 300 inventory items...`);
   const invCats = ["FABRIC","THREADS","BUTTONS","ZIPPERS","ACCESSORIES","PACKAGING","LABELS","EQUIPMENT"] as const;
-  const fabricNames = ["Swiss Lace","Guipure Lace","French Lace","Chiffon","Satin","Silk","Cotton Voile","Ankara Print","Aso Oke","Brocade","Organza","Tulle","Velvet","Crepe","Georgette","Linen","Sequin Mesh","Beaded Tulle"];
-  for (const did of designerIds.slice(0, 30)) {
-    const count = rand(3, 10);
+  for (const did of designerIds.slice(0, 40)) {
+    const count = rand(3, 12);
     for (let j = 0; j < count; j++) {
       const cat = pick(invCats);
       await db.insert(inventoryItemsTable).values({
-        userId: did, name: cat === "FABRIC" ? pick(fabricNames) : pick(["Polyester Thread","Cotton Thread","Gold Button","Pearl Button","Metal Zipper","Invisible Zipper","Satin Ribbon","Hook & Eye","Bias Tape","Elastic Band","Fusible Interfacing"]),
-        category: cat as any, unit: "UNIT" as any, quantity: rand(5, 500),
-        unitCost: rand(200, 50000), lowStockThreshold: rand(5, 20),
+        userId: did,
+        name: cat === "FABRIC" ? pick(FABRIC_NAMES) : pick(["Polyester Thread","Cotton Thread","Gold Button","Pearl Button","Metal Zipper","Invisible Zipper","Satin Ribbon","Hook & Eye","Bias Tape","Elastic Band","Fusible Interfacing","Label Tags","Branded Tags","Packaging Boxes","Hangers","Mannequin Cover"]),
+        category: cat as any, unit: "UNIT" as any, quantity: rand(5, 800),
+        unitCost: rand(150, 60000), lowStockThreshold: rand(3, 25),
       });
     }
   }
 
   console.log("\n✅ Demo data seeded successfully!");
-  console.log(`  80 designers, 40 clients`);
-  console.log(`  550 projects, 620 reviews, 200 bookings`);
-  console.log(`  300 notifications, 800+ portfolio items`);
-  console.log(`  200 invoices, 400 expenses, 200+ inventory items`);
-  console.log(`\n  All demo users use @drape-demo.com emails.`);
-  console.log(`  Default password for all: Demo@123`);
-  console.log(`  To clear: DELETE FROM users WHERE email LIKE '%@drape-demo.com';`);
+  console.log("  ─────────────────────────────────────────────");
+  console.log("  100 designers, 60 clients, 10 admins");
+  console.log("  900 projects, 1,200 reviews, 300 bookings");
+  console.log("  400 notifications, 2,000 chat messages");
+  console.log("  1,500+ portfolio items, 25 suppliers");
+  console.log("  300 invoices, 500 expenses, 300 inventory items");
+  console.log("  ─────────────────────────────────────────────");
+  console.log("  All demo users: @drape-demo.com emails");
+  console.log("  Default password: Demo@123");
+  console.log("  Clear: DELETE FROM users WHERE email LIKE '%@drape-demo.com';\n");
   process.exit(0);
 }
 

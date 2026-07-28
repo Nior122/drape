@@ -13,8 +13,6 @@ import { requireRole } from "../../middlewares/requireRole";
 const router: IRouter = Router();
 router.use(requireAuth, requireRole("ADMIN"));
 
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-
 async function adminAudit(userId: string, action: string, entity: string, entityId?: string, details?: Record<string, unknown>) {
   try {
     await db.insert(auditLogsTable).values({ userId, action, entity, entityId, details: details ?? {} });
@@ -35,24 +33,11 @@ router.get("/admin/dashboard", async (req: Request, res: Response): Promise<void
   const [activeSubs] = await db.select({ c: count() }).from(userSubscriptionsTable).where(eq(userSubscriptionsTable.status, "active"));
   const [freeSubs] = await db.select({ c: count() }).from(userSubscriptionsTable).where(eq(userSubscriptionsTable.planKey, "free"));
 
-  // Revenue
-  const [revenueAgg] = await db.select({
-    total: sql<number>`COALESCE(SUM(total), 0)`,
-    paid: sql<number>`COALESCE(SUM(amount_paid), 0)`,
-  }).from(import("@workspace/db").then(m => m.invoicesTable).catch(() => null as any))
-    .where(eq(import("@workspace/db").then(m => m.invoicesTable).catch(() => null as any).status, "PAID"));
-
   res.json({
-    users: Number(userCount?.c ?? 0),
-    designers: Number(designerCount?.c ?? 0),
-    clients: Number(clientCount?.c ?? 0),
-    orders: Number(orderCount?.c ?? 0),
-    reviews: Number(reviewCount?.c ?? 0),
-    pendingReviews: Number(pendingReviews?.c ?? 0),
-    activeSubscriptions: Number(activeSubs?.c ?? 0),
-    freeUsers: Number(freeSubs?.c ?? 0),
-    revenue: Number(revenueAgg?.total ?? 0),
-    revenuePaid: Number(revenueAgg?.paid ?? 0),
+    users: Number(userCount?.c ?? 0), designers: Number(designerCount?.c ?? 0),
+    clients: Number(clientCount?.c ?? 0), orders: Number(orderCount?.c ?? 0),
+    reviews: Number(reviewCount?.c ?? 0), pendingReviews: Number(pendingReviews?.c ?? 0),
+    activeSubscriptions: Number(activeSubs?.c ?? 0), freeUsers: Number(freeSubs?.c ?? 0),
   });
 });
 
@@ -99,7 +84,6 @@ router.delete("/admin/users/:id", async (req: Request, res: Response): Promise<v
    ════════════════════════════════════════════════════════════════════ */
 
 router.get("/admin/designers", async (req: Request, res: Response): Promise<void> => {
-  const { status, page = "1", limit = "50" } = req.query as Record<string, string | undefined>;
   const conditions = [sql`${usersTable.role} IN ('DESIGNER', 'PRODUCER')`];
   const designers = await db.select({
     id: usersTable.id, name: usersTable.name, email: usersTable.email,
@@ -110,12 +94,8 @@ router.get("/admin/designers", async (req: Request, res: Response): Promise<void
     verificationStatus: sql<string>`CASE WHEN ${producerProfilesTable.experience} >= 5 THEN 'VERIFIED' WHEN ${producerProfilesTable.experience} >= 2 THEN 'PENDING' ELSE 'UNVERIFIED' END`,
     createdAt: usersTable.createdAt,
   }).from(usersTable).innerJoin(producerProfilesTable, eq(usersTable.id, producerProfilesTable.userId))
-    .where(and(...conditions)).orderBy(desc(usersTable.createdAt))
-    .limit(Number(limit)).offset((Number(page) - 1) * Number(limit));
-  const [total] = await db.select({ c: count() }).from(usersTable)
-    .innerJoin(producerProfilesTable, eq(usersTable.id, producerProfilesTable.userId))
-    .where(and(...conditions));
-  res.json({ designers, total: Number(total?.c ?? 0) });
+    .where(and(...conditions)).orderBy(desc(usersTable.createdAt)).limit(100);
+  res.json({ designers });
 });
 
 /* ════════════════════════════════════════════════════════════════════
@@ -173,24 +153,49 @@ router.patch("/admin/subscriptions/:id", async (req: Request, res: Response): Pr
 });
 
 /* ════════════════════════════════════════════════════════════════════
-   SYSTEM ANNOUNCEMENTS
+   FEATURE FLAGS
+   ════════════════════════════════════════════════════════════════════ */
+
+const featureFlags: Record<string, boolean> = {
+  ai_enabled: true, marketplace_enabled: true, bookings_enabled: true,
+  reviews_enabled: true, business_finance: true, admin_panel: true,
+  maintenance_mode: false, signup_enabled: true,
+};
+
+router.get("/admin/feature-flags", (_req: Request, res: Response): void => { res.json({ flags: featureFlags }); });
+
+router.patch("/admin/feature-flags", (req: Request, res: Response): void => {
+  const { flags } = req.body as { flags: Record<string, boolean> };
+  if (flags) Object.assign(featureFlags, flags);
+  res.json({ flags: featureFlags });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   AUDIT LOGS
+   ════════════════════════════════════════════════════════════════════ */
+
+router.get("/admin/audit-logs", async (req: Request, res: Response): Promise<void> => {
+  const { page = "1", limit = "50" } = req.query as Record<string, string | undefined>;
+  const logs = await db.select().from(auditLogsTable).orderBy(desc(auditLogsTable.createdAt))
+    .limit(Number(limit)).offset((Number(page) - 1) * Number(limit));
+  const [total] = await db.select({ c: count() }).from(auditLogsTable);
+  res.json({ logs, total: Number(total?.c ?? 0) });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   ANNOUNCEMENTS
    ════════════════════════════════════════════════════════════════════ */
 
 router.get("/admin/announcements", async (req: Request, res: Response): Promise<void> => {
-  // Use notifications as announcements — get system-wide ones
-  const announcements = await db.select()
-    .from(notificationsTable)
-    .where(sql`${notificationsTable.type} = 'GENERAL'`)
-    .orderBy(desc(notificationsTable.createdAt)).limit(20);
+  const announcements = await db.select().from(notificationsTable)
+    .where(sql`${notificationsTable.type} = 'GENERAL'`).orderBy(desc(notificationsTable.createdAt)).limit(20);
   res.json({ announcements });
 });
 
 router.post("/admin/announcements", async (req: Request, res: Response): Promise<void> => {
   const { title, body, link } = req.body as { title: string; body?: string; link?: string };
-  // Broadcast to all users (in production this would fan out)
   const [notif] = await db.insert(notificationsTable).values({
-    userId: req.userId!, // anchor user
-    type: "GENERAL", title, body, link,
+    userId: req.userId!, type: "GENERAL", title, body, link,
   }).returning();
   await adminAudit(req.userId!, "ANNOUNCEMENT", "announcement", notif.id, { title });
   res.status(201).json(notif);
@@ -201,68 +206,35 @@ router.post("/admin/announcements", async (req: Request, res: Response): Promise
    ════════════════════════════════════════════════════════════════════ */
 
 router.get("/admin/platform", async (req: Request, res: Response): Promise<void> => {
-  // Daily Active Users (last 24h)
   const oneDayAgo = new Date(Date.now() - 86400000);
   const [dau] = await db.select({ c: count() }).from(auditLogsTable).where(gte(auditLogsTable.createdAt, oneDayAgo));
-
-  // Total revenue
-  const [revAgg] = await db.select({
-    total: sql<number>`COALESCE(SUM(total), 0)`,
-    paid: sql<number>`COALESCE(SUM(amount_paid), 0)`,
-  }).from(import("@workspace/db").then(m => m.invoicesTable).catch(() => null as any));
-
-  // Bookings
   const [bookingCount] = await db.select({ c: count() }).from(bookingsTable);
   const [completedProjects] = await db.select({ c: count() }).from(projectsTable).where(eq(projectsTable.status, "COMPLETED"));
-
   res.json({
-    dailyActiveUsers: Number(dau?.c ?? 0),
-    totalRevenue: Number(revAgg?.total ?? 0),
-    revenueCollected: Number(revAgg?.paid ?? 0),
-    totalBookings: Number(bookingCount?.c ?? 0),
-    completedProjects: Number(completedProjects?.c ?? 0),
-    timestamp: new Date().toISOString(),
+    dailyActiveUsers: Number(dau?.c ?? 0), totalBookings: Number(bookingCount?.c ?? 0),
+    completedProjects: Number(completedProjects?.c ?? 0), timestamp: new Date().toISOString(),
   });
 });
 
 /* ════════════════════════════════════════════════════════════════════
-   FEATURE FLAGS
+   DEMO DATA MANAGEMENT
    ════════════════════════════════════════════════════════════════════ */
 
-const featureFlags: Record<string, boolean> = {
-  ai_enabled: true,
-  marketplace_enabled: true,
-  bookings_enabled: true,
-  reviews_enabled: true,
-  business_finance: true,
-  admin_panel: true,
-  maintenance_mode: false,
-  signup_enabled: true,
-};
-
-router.get("/admin/feature-flags", (_req: Request, res: Response): void => {
-  res.json({ flags: featureFlags });
+router.post("/admin/demo/clear", async (req: Request, res: Response): Promise<void> => {
+  const result = await db.delete(usersTable).where(sql`email ILIKE '%@drape-demo.com'`).returning({ id: usersTable.id });
+  await adminAudit(req.userId!, "CLEAR_DEMO_DATA", "demo", undefined, { count: result.length });
+  res.json({ cleared: result.length, message: "Demo data cleared successfully." });
 });
 
-router.patch("/admin/feature-flags", (req: Request, res: Response): void => {
-  const { flags } = req.body as { flags: Record<string, boolean> };
-  if (flags) {
-    Object.assign(featureFlags, flags);
-  }
-  res.json({ flags: featureFlags });
-});
-
-/* ════════════════════════════════════════════════════════════════════
-   AUDIT LOGS
-   ════════════════════════════════════════════════════════════════════ */
-
-router.get("/admin/audit-logs", async (req: Request, res: Response): Promise<void> => {
-  const { page = "1", limit = "50" } = req.query as Record<string, string | undefined>;
-  const logs = await db.select()
-    .from(auditLogsTable).orderBy(desc(auditLogsTable.createdAt))
-    .limit(Number(limit)).offset((Number(page) - 1) * Number(limit));
-  const [total] = await db.select({ c: count() }).from(auditLogsTable);
-  res.json({ logs, total: Number(total?.c ?? 0) });
+router.get("/admin/demo/status", async (req: Request, res: Response): Promise<void> => {
+  const [designers] = await db.select({ c: count() }).from(usersTable).where(and(sql`role IN ('DESIGNER','PRODUCER')`, sql`email ILIKE '%@drape-demo.com'`));
+  const [clients] = await db.select({ c: count() }).from(usersTable).where(and(eq(usersTable.role, "CLIENT"), sql`email ILIKE '%@drape-demo.com'`));
+  res.json({
+    hasDemoData: Number(designers?.c ?? 0) > 0,
+    designerCount: Number(designers?.c ?? 0),
+    clientCount: Number(clients?.c ?? 0),
+    message: Number(designers?.c ?? 0) > 0 ? "Demo data present" : "No demo data found",
+  });
 });
 
 export default router;
