@@ -13,6 +13,11 @@ import { v4 as uuidv4 } from "uuid";
 
 const router: IRouter = Router();
 
+// ═══ DIAGNOSTIC — remove after confirming marketplace module loads ═════
+router.get("/marketplace/__ping", (_req: Request, res: Response) => {
+  res.json({ status: "marketplace-ok", routesRegistered: true });
+});
+
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
 const PUBLIC_SELECT = {

@@ -6,7 +6,7 @@ router.get("/healthz", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-router.get("/api/health", (_req, res) => {
+router.get("/health", (_req, res) => {
   res.json({
     status: "ok",
     uptime: process.uptime(),

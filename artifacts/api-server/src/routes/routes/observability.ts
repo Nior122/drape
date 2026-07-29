@@ -18,7 +18,7 @@ router.get("/healthz", (_req: Request, res: Response) => {
  * GET /api/health — Health check with DB dependency.
  * Used by monitoring and load balancers.
  */
-router.get("/api/health", async (_req: Request, res: Response) => {
+router.get("/health", async (_req: Request, res: Response) => {
   let dbStatus = "ok";
   try {
     await db.execute(sql`SELECT 1`);
@@ -42,7 +42,7 @@ router.get("/api/health", async (_req: Request, res: Response) => {
  * GET /api/ready — Readiness probe.
  * Indicates the server is ready to accept traffic.
  */
-router.get("/api/ready", async (_req: Request, res: Response) => {
+router.get("/ready", async (_req: Request, res: Response) => {
   try {
     await db.execute(sql`SELECT 1`);
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -55,7 +55,7 @@ router.get("/api/ready", async (_req: Request, res: Response) => {
  * GET /api/metrics — Basic application metrics.
  * For Prometheus or simple monitoring tools.
  */
-router.get("/api/metrics", async (_req: Request, res: Response) => {
+router.get("/metrics", async (_req: Request, res: Response) => {
   const mem = process.memoryUsage();
   const uptime = process.uptime();
 
